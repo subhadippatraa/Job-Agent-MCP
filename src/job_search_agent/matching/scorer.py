@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from job_search_agent.config import MatchWeights, get_settings
 from job_search_agent.matching.experience import compute_experience_score
 from job_search_agent.matching.skills import compute_skill_score, match_skills
 from job_search_agent.matching.titles import compute_title_similarity
-from job_search_agent.models.candidate import CandidateProfile
 from job_search_agent.models.job import Job, RemoteType
 from job_search_agent.models.match import MatchResult, ScoreBreakdown
-from job_search_agent.resume.parser import ResumeData
+
+if TYPE_CHECKING:
+    from job_search_agent.models.candidate import CandidateProfile
+    from job_search_agent.resume.parser import ResumeData
 
 
 def score_job(
@@ -55,10 +59,18 @@ def score_job(
     missing_preferred = [m.skill for m in preferred_matches if not m.matched]
 
     req_matched_count = sum(1 for m in required_matches if m.matched)
-    req_detail = f"{req_matched_count}/{len(required_matches)} required skills matched" if required_matches else "No required skills listed"
+    req_detail = (
+        f"{req_matched_count}/{len(required_matches)} required skills matched"
+        if required_matches
+        else "No required skills listed"
+    )
 
     pref_matched_count = sum(1 for m in preferred_matches if m.matched)
-    pref_detail = f"{pref_matched_count}/{len(preferred_matches)} preferred skills matched" if preferred_matches else "No preferred skills listed"
+    pref_detail = (
+        f"{pref_matched_count}/{len(preferred_matches)} preferred skills matched"
+        if preferred_matches
+        else "No preferred skills listed"
+    )
 
     # --- 2. Experience matching ---
     exp_score, exp_detail = compute_experience_score(
@@ -120,12 +132,20 @@ def score_job(
 
     # Strengths and concerns
     strengths = _build_strengths(
-        required_skills_score, exp_score, role_score, location_score,
-        req_matched_count, len(required_matches),
+        required_skills_score,
+        exp_score,
+        role_score,
+        location_score,
+        req_matched_count,
+        len(required_matches),
     )
     concerns = _build_concerns(
-        missing_required, missing_preferred, exp_score, experience_gap,
-        location_score, role_score,
+        missing_required,
+        missing_preferred,
+        exp_score,
+        experience_gap,
+        location_score,
+        role_score,
     )
 
     # Resume evidence for matched skills
@@ -202,8 +222,23 @@ def _score_domain(job: Job, candidate: CandidateProfile) -> tuple[float, str]:
 
     # AI/ML domain keywords
     domain_keywords = {
-        "ai/ml": ["artificial intelligence", "machine learning", "ai ", "ml ", "deep learning", "neural"],
-        "generative ai": ["generative ai", "genai", "gen ai", "llm", "language model", "gpt", "claude"],
+        "ai/ml": [
+            "artificial intelligence",
+            "machine learning",
+            "ai ",
+            "ml ",
+            "deep learning",
+            "neural",
+        ],
+        "generative ai": [
+            "generative ai",
+            "genai",
+            "gen ai",
+            "llm",
+            "language model",
+            "gpt",
+            "claude",
+        ],
         "backend engineering": ["backend", "back-end", "api", "server", "microservice"],
         "developer tools": ["developer tool", "dev tool", "sdk", "api platform", "devx"],
         "ai infrastructure": ["ai infrastructure", "ml infrastructure", "mlops", "ai platform"],

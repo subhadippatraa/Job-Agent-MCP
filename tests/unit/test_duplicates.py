@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from job_search_agent.models.job import Job
 from job_search_agent.tools.search import _deduplicate
 
@@ -20,10 +18,10 @@ class TestDeduplication:
 
     def test_company_title_dedup(self):
         jobs = [
-            Job(company="TechCorp", title="AI Engineer",
-                canonical_url="https://greenhouse.io/1"),
-            Job(company="TechCorp", title="AI Engineer",
-                canonical_url="https://lever.co/2"),  # Different URL
+            Job(company="TechCorp", title="AI Engineer", canonical_url="https://greenhouse.io/1"),
+            Job(
+                company="TechCorp", title="AI Engineer", canonical_url="https://lever.co/2"
+            ),  # Different URL
         ]
         unique, dups = _deduplicate(jobs)
         assert len(unique) == 1

@@ -15,9 +15,10 @@ class OpenAIProvider(LLMProvider):
         self.model = model
         try:
             from openai import AsyncOpenAI
+
             self._client = AsyncOpenAI(api_key=api_key)
         except ImportError:
-            raise ImportError("OpenAI package required. Install with: pip install openai")
+            raise ImportError("OpenAI package required. Install with: pip install openai") from None
 
     @property
     def name(self) -> str:

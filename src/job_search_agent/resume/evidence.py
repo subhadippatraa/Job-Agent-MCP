@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from job_search_agent.resume.parser import ResumeData
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from job_search_agent.resume.parser import ResumeData
 
 
 def extract_evidence_for_skills(

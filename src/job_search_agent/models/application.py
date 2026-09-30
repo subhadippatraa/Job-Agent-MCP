@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import enum
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
 
-class ApplicationStatus(str, enum.Enum):
+class ApplicationStatus(enum.StrEnum):
     DISCOVERED = "discovered"
     ANALYZED = "analyzed"
     SHORTLISTED = "shortlisted"
@@ -27,20 +26,20 @@ class ApplicationStatus(str, enum.Enum):
 class Application(BaseModel):
     """An application record tracking a candidate's interaction with a job."""
 
-    id: Optional[str] = None
+    id: str | None = None
     job_id: str
-    candidate_id: Optional[str] = None
+    candidate_id: str | None = None
 
     status: ApplicationStatus = ApplicationStatus.DISCOVERED
-    applied_at: Optional[datetime] = None
-    resume_version: Optional[str] = None
-    application_url: Optional[str] = None
-    notes: Optional[str] = None
-    source: Optional[str] = None
+    applied_at: datetime | None = None
+    resume_version: str | None = None
+    application_url: str | None = None
+    notes: str | None = None
+    source: str | None = None
 
     # Timestamps
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     model_config = {"use_enum_values": True}
 
@@ -48,12 +47,12 @@ class Application(BaseModel):
 class ApplicationStatusChange(BaseModel):
     """A single status change in an application's history."""
 
-    id: Optional[str] = None
+    id: str | None = None
     application_id: str
     old_status: str
     new_status: str
     changed_at: datetime = Field(default_factory=datetime.utcnow)
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class ApplicationPrep(BaseModel):
@@ -68,8 +67,8 @@ class ApplicationPrep(BaseModel):
     title: str
 
     # Match context
-    match_score: Optional[float] = None
-    recommendation: Optional[str] = None
+    match_score: float | None = None
+    recommendation: str | None = None
     matched_skills: list[str] = Field(default_factory=list)
     missing_required_skills: list[str] = Field(default_factory=list)
     missing_preferred_skills: list[str] = Field(default_factory=list)
@@ -86,7 +85,7 @@ class ApplicationPrep(BaseModel):
     important_requirements: list[str] = Field(default_factory=list)
 
     # Communication
-    suggested_recruiter_message: Optional[str] = None
+    suggested_recruiter_message: str | None = None
     suggested_cover_letter_points: list[str] = Field(default_factory=list)
     likely_screening_questions: list[str] = Field(default_factory=list)
 
@@ -100,4 +99,4 @@ class ApplicationPrep(BaseModel):
     application_checklist: list[str] = Field(default_factory=list)
 
     # Application URL
-    application_url: Optional[str] = None
+    application_url: str | None = None

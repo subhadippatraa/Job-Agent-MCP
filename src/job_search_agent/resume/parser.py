@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Optional
 
 from job_search_agent.logging import get_logger
 
@@ -25,7 +24,7 @@ class ResumeData:
         # Simple sentence splitting — handles bullet points and newlines
         raw = self.text.replace("\n", " ").replace("\r", "")
         # Split on period+space, bullet markers, or multiple spaces
-        parts = re.split(r'(?<=[.!?])\s+|[•·▪▸►]\s*|\n+', raw)
+        parts = re.split(r"(?<=[.!?])\s+|[•·▪▸►]\s*|\n+", raw)
         return [s.strip() for s in parts if s.strip() and len(s.strip()) > 10]
 
     def find_evidence(self, skill: str) -> list[str]:
@@ -34,7 +33,7 @@ class ResumeData:
             return self._evidence_cache[skill.lower()]
 
         evidence = []
-        skill_lower = skill.lower()
+        skill.lower()
 
         # Also try variations
         variations = _skill_variations(skill)
@@ -66,8 +65,8 @@ def _skill_variations(skill: str) -> list[str]:
 
     # Handle common patterns
     # "FastAPI" → ["fastapi", "fast api"]
-    if re.search(r'[a-z][A-Z]', skill):
-        spaced = re.sub(r'([a-z])([A-Z])', r'\1 \2', skill).lower()
+    if re.search(r"[a-z][A-Z]", skill):
+        spaced = re.sub(r"([a-z])([A-Z])", r"\1 \2", skill).lower()
         variations.append(spaced)
 
     # "CI/CD" → ["ci/cd", "ci cd", "cicd"]
@@ -102,7 +101,7 @@ def parse_pdf(path: str | Path) -> ResumeData:
     except ImportError:
         raise ImportError(
             "PyMuPDF is required for PDF parsing. Install with: pip install pymupdf"
-        )
+        ) from None
 
     logger.info("parsing_resume", path=str(path))
 
@@ -140,6 +139,7 @@ def get_resume(path: str | Path | None = None) -> ResumeData | None:
 
     if path is None:
         from job_search_agent.config import get_settings
+
         path = get_settings().resolve_path(get_settings().resume_path)
 
     path = Path(path)

@@ -6,20 +6,32 @@ for browser-based form filling.
 
 ## Architecture
 
-```
-User: "Apply to job ABC"
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant HA as Host Agent<br/>(Codex / Claude)
+    participant JSA as job-search-agent<br/>MCP
+    participant PW as Playwright MCP
 
-Host Agent (Codex / Claude):
-  1. get_job(job_id)          → job-search-agent MCP
-  2. prepare_application(id)  → job-search-agent MCP
-  3. Review preparation       → Show to user
-  4. Open application URL     → Playwright MCP
-  5. Fill known fields        → Playwright MCP
-  6. Identify unknown fields  → Playwright MCP → ask user
-  7. Show final summary       → Host agent
-  8. Get explicit approval    → User
-  9. Submit form              → Playwright MCP (only after approval!)
-  10. record_application(id)  → job-search-agent MCP
+    U->>HA: "Apply to job ABC"
+    HA->>JSA: get_job(job_id)
+    JSA-->>HA: Job details
+    HA->>JSA: prepare_application(id)
+    JSA-->>HA: Prep package
+    HA-->>U: Show preparation summary
+    HA->>PW: Open application URL
+    HA->>PW: Fill known fields
+    PW-->>HA: Unknown fields found
+    HA-->>U: Ask for sensitive info
+    U-->>HA: Provide salary, auth, etc.
+    HA->>PW: Fill remaining fields
+    HA-->>U: Show final summary
+    U-->>HA: "Submit it"
+    Note over HA: Explicit approval received
+    HA->>PW: Submit form
+    HA->>JSA: record_application(id)
+    JSA-->>HA: Confirmed
+    HA-->>U: Application recorded ✅
 ```
 
 ## Setup Playwright MCP

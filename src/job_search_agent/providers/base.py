@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import abc
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import TYPE_CHECKING
 
-from job_search_agent.models.job import Job
+if TYPE_CHECKING:
+    from job_search_agent.models.job import Job
 
 
 @dataclass
@@ -15,12 +16,12 @@ class SearchQuery:
 
     keywords: list[str] = field(default_factory=list)
     roles: list[str] = field(default_factory=list)
-    location: Optional[str] = None
-    country: Optional[str] = None
+    location: str | None = None
+    country: str | None = None
     remote_only: bool = False
-    experience_min: Optional[int] = None
-    experience_max: Optional[int] = None
-    posted_within_hours: Optional[int] = None
+    experience_min: int | None = None
+    experience_max: int | None = None
+    posted_within_hours: int | None = None
     skills: list[str] = field(default_factory=list)
     limit: int = 50
 
@@ -67,6 +68,5 @@ class JobProvider(abc.ABC):
         """
         ...
 
-    async def close(self) -> None:
+    async def close(self) -> None:  # noqa: B027
         """Clean up resources (e.g., HTTP client). Override if needed."""
-        pass

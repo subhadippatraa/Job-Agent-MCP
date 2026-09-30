@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-import pytest
-
+from job_search_agent.models.job import RemoteType
 from job_search_agent.providers.greenhouse import (
     _detect_remote,
     _extract_experience,
     _extract_skills_from_text,
     _normalize_title,
 )
-from job_search_agent.models.job import RemoteType
 
 
 class TestTitleNormalization:

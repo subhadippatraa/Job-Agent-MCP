@@ -70,12 +70,19 @@ async def search_jobs(
         sources: Specific providers to search (e.g., ["greenhouse", "lever"])
     """
     from job_search_agent.tools.search import search_jobs as _search
+
     return await _search(
-        keywords=keywords, roles=roles, location=location,
-        remote_only=remote_only, country=country,
-        experience_min=experience_min, experience_max=experience_max,
-        posted_within_hours=posted_within_hours, skills=skills,
-        limit=limit, sources=sources,
+        keywords=keywords,
+        roles=roles,
+        location=location,
+        remote_only=remote_only,
+        country=country,
+        experience_min=experience_min,
+        experience_max=experience_max,
+        posted_within_hours=posted_within_hours,
+        skills=skills,
+        limit=limit,
+        sources=sources,
     )
 
 
@@ -93,6 +100,7 @@ async def search_jobs_for_candidate() -> dict:
     ranked opportunities.
     """
     from job_search_agent.tools.search import search_jobs_for_candidate as _search
+
     return await _search()
 
 
@@ -111,6 +119,7 @@ async def get_job(job_id: str) -> dict:
         job_id: The internal job ID (UUID)
     """
     from job_search_agent.tools.analyze import get_job as _get
+
     return await _get(job_id)
 
 
@@ -128,6 +137,7 @@ async def analyze_job_url(url: str) -> dict:
         url: The job posting URL to analyze
     """
     from job_search_agent.tools.analyze import analyze_job_url as _analyze
+
     return await _analyze(url)
 
 
@@ -150,6 +160,7 @@ async def check_duplicate_job(
         location: Job location
     """
     from job_search_agent.tools.analyze import check_duplicate_job as _check
+
     return await _check(url=url, company=company, title=title, location=location)
 
 
@@ -179,6 +190,7 @@ async def match_job_to_candidate(
         job_description: Raw job description text (alternative to job_id)
     """
     from job_search_agent.tools.match import match_job_to_candidate as _match
+
     return await _match(job_id=job_id, job_description=job_description)
 
 
@@ -197,6 +209,7 @@ async def rank_jobs(
         min_score: Optional minimum score threshold (0-100)
     """
     from job_search_agent.tools.match import rank_jobs as _rank
+
     return await _rank(job_ids=job_ids, min_score=min_score)
 
 
@@ -213,6 +226,7 @@ async def save_job(job_id: str) -> dict:
         job_id: The internal job ID
     """
     from job_search_agent.tools.applications import save_job as _save
+
     return await _save(job_id)
 
 
@@ -226,6 +240,7 @@ async def shortlist_job(job_id: str) -> dict:
         job_id: The internal job ID
     """
     from job_search_agent.tools.applications import shortlist_job as _shortlist
+
     return await _shortlist(job_id)
 
 
@@ -241,6 +256,7 @@ async def skip_job(job_id: str, reason: str | None = None) -> dict:
                 "salary", "not interested", "duplicate", "skill mismatch")
     """
     from job_search_agent.tools.applications import skip_job as _skip
+
     return await _skip(job_id, reason=reason)
 
 
@@ -272,6 +288,7 @@ async def prepare_application(job_id: str) -> dict:
         job_id: The internal job ID to prepare for
     """
     from job_search_agent.tools.applications import prepare_application as _prepare
+
     return await _prepare(job_id)
 
 
@@ -282,11 +299,13 @@ async def record_application(
     application_url: str | None = None,
     notes: str | None = None,
     source: str | None = None,
+    user_confirmed: bool = False,
 ) -> dict:
     """Record that an application has been submitted.
 
     Use this AFTER the user has manually submitted an application.
-    Never call this without explicit user confirmation.
+    By default, requires explicit user confirmation (REQUIRE_HUMAN_APPROVAL=true).
+    Set REQUIRE_HUMAN_APPROVAL=false in .env to allow automated recording.
 
     Args:
         job_id: The internal job ID
@@ -294,11 +313,30 @@ async def record_application(
         application_url: Where the application was submitted
         notes: Any notes about the application
         source: How it was submitted (e.g., "direct", "linkedin", "referral")
+        user_confirmed: Set to true to confirm the user has approved this action
     """
+    settings = get_settings()
+    if settings.require_human_approval and not user_confirmed:
+        return {
+            "error": "Human approval required",
+            "message": (
+                "REQUIRE_HUMAN_APPROVAL is enabled (default). "
+                "Please confirm with the user before recording this application. "
+                "Call again with user_confirmed=true after getting explicit approval. "
+                "To disable this check, set REQUIRE_HUMAN_APPROVAL=false in .env."
+            ),
+            "job_id": job_id,
+            "action_needed": "Ask user for explicit confirmation before proceeding.",
+        }
+
     from job_search_agent.tools.applications import record_application as _record
+
     return await _record(
-        job_id=job_id, resume_version=resume_version,
-        application_url=application_url, notes=notes, source=source,
+        job_id=job_id,
+        resume_version=resume_version,
+        application_url=application_url,
+        notes=notes,
+        source=source,
     )
 
 
@@ -321,6 +359,7 @@ async def update_application_status(
         notes: Optional notes about the status change
     """
     from job_search_agent.tools.applications import update_application_status as _update
+
     return await _update(job_id=job_id, status=status, notes=notes)
 
 
@@ -348,6 +387,7 @@ async def get_applications(
         limit: Maximum results
     """
     from job_search_agent.tools.applications import get_applications as _get
+
     return await _get(status=status, company=company, days=days, min_score=min_score, limit=limit)
 
 
@@ -366,6 +406,7 @@ async def get_job_stats() -> dict:
     Use this for "How is my job search going?" or "Show me stats."
     """
     from job_search_agent.tools.stats import get_job_stats as _stats
+
     return await _stats()
 
 
@@ -386,7 +427,56 @@ async def get_daily_job_digest(
         limit: Maximum number of jobs (default: 10)
     """
     from job_search_agent.tools.stats import get_daily_job_digest as _digest
+
     return await _digest(hours=hours, min_score=min_score, limit=limit)
+
+
+# =============================================================================
+# LLM-Enhanced Analysis Tools
+# =============================================================================
+
+
+@mcp.tool()
+async def enhance_job_analysis(job_id: str) -> dict:
+    """Run LLM-enhanced deep analysis on a job description.
+
+    Augments regex-extracted data with LLM-powered structured extraction.
+    Discovers skills, seniority level, responsibilities, tech stack, red flags,
+    and AI/ML relevance that keyword matching may miss.
+
+    Falls back to regex-only results if no LLM is configured.
+
+    Use this when the user wants deeper analysis: "Tell me more about this job",
+    "What are the red flags?", "What tech stack does this use?"
+
+    Args:
+        job_id: The internal job ID
+    """
+    from job_search_agent.tools.enhance import enhance_job_analysis as _enhance
+
+    return await _enhance(job_id)
+
+
+@mcp.tool()
+async def compare_jobs(job_id_a: str, job_id_b: str) -> dict:
+    """Compare two jobs side-by-side for the candidate.
+
+    Uses deterministic scoring (always available) AND LLM-powered semantic
+    analysis (when configured) to produce a detailed comparison:
+    - Match scores for both jobs
+    - Strengths and concerns for each
+    - A recommendation (A, B, both, or neither)
+    - Growth potential analysis
+
+    Use this when: "Compare job 3 and job 7", "Which is better for me?"
+
+    Args:
+        job_id_a: First job ID
+        job_id_b: Second job ID
+    """
+    from job_search_agent.tools.enhance import compare_jobs as _compare
+
+    return await _compare(job_id_a=job_id_a, job_id_b=job_id_b)
 
 
 # =============================================================================

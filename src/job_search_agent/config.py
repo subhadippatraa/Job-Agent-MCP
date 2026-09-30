@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
-from typing import Optional
 
 from dotenv import load_dotenv
 from pydantic import Field, field_validator
@@ -63,15 +61,28 @@ class Settings(BaseSettings):
     ashby_boards: list[str] = Field(default_factory=list, alias="ASHBY_BOARDS")
 
     # LLM
-    openai_api_key: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
+    openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4o", alias="OPENAI_MODEL")
-    anthropic_api_key: Optional[str] = Field(default=None, alias="ANTHROPIC_API_KEY")
+    anthropic_api_key: str | None = Field(default=None, alias="ANTHROPIC_API_KEY")
     anthropic_model: str = Field(default="claude-sonnet-4-20250514", alias="ANTHROPIC_MODEL")
     llm_provider: str = Field(default="none", alias="LLM_PROVIDER")
 
     # Matching
     match_weights: MatchWeights = Field(default_factory=MatchWeights)
     auto_shortlist_min_score: int = Field(default=75, alias="AUTO_SHORTLIST_MIN_SCORE")
+
+    # Safety
+    require_human_approval: bool = Field(
+        default=True,
+        alias="REQUIRE_HUMAN_APPROVAL",
+        description=(
+            "When True (default), the agent will NEVER auto-submit applications. "
+            "prepare_application returns a prep package, and record_application "
+            "only records after the user explicitly confirms submission. "
+            "Set to False ONLY if you have an external automation pipeline that "
+            "handles approval logic (e.g., a CI/CD workflow with manual gates)."
+        ),
+    )
 
     # Logging
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")

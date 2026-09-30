@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 import yaml
 from pydantic import BaseModel, Field
@@ -14,9 +13,9 @@ class WorkHistoryEntry(BaseModel):
 
     company: str
     title: str
-    start_date: Optional[str] = None
-    end_date: Optional[str] = Field(default=None, description="None means 'present'")
-    description: Optional[str] = None
+    start_date: str | None = None
+    end_date: str | None = Field(default=None, description="None means 'present'")
+    description: str | None = None
     technologies: list[str] = Field(default_factory=list)
 
 
@@ -24,25 +23,25 @@ class ProjectEntry(BaseModel):
     """A project the candidate has worked on."""
 
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     technologies: list[str] = Field(default_factory=list)
-    url: Optional[str] = None
+    url: str | None = None
 
 
 class EducationEntry(BaseModel):
     """An education credential."""
 
     institution: str
-    degree: Optional[str] = None
-    field: Optional[str] = None
-    year: Optional[int] = None
+    degree: str | None = None
+    field: str | None = None
+    year: int | None = None
 
 
 class SalaryExpectation(BaseModel):
     """Salary expectations — optional and private."""
 
-    min: Optional[float] = None
-    max: Optional[float] = None
+    min: float | None = None
+    max: float | None = None
     currency: str = "INR"
     period: str = "annual"
 
@@ -56,12 +55,12 @@ class CandidateProfile(BaseModel):
 
     # Identity
     name: str
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    current_location: Optional[str] = None
+    email: str | None = None
+    phone: str | None = None
+    current_location: str | None = None
 
     # Experience
-    years_experience: Optional[float] = Field(
+    years_experience: float | None = Field(
         default=None,
         description="Total years of relevant experience",
     )
@@ -95,15 +94,15 @@ class CandidateProfile(BaseModel):
     education: list[EducationEntry] = Field(default_factory=list)
 
     # Sensitive — optional, never guessed
-    work_authorization: Optional[str] = Field(
+    work_authorization: str | None = Field(
         default=None,
         description="e.g., 'citizen', 'work_permit', 'visa_required'",
     )
-    notice_period: Optional[str] = Field(
+    notice_period: str | None = Field(
         default=None,
         description="e.g., '30 days', 'immediate'",
     )
-    salary_expectation: Optional[SalaryExpectation] = None
+    salary_expectation: SalaryExpectation | None = None
 
     # Links
     links: dict[str, str] = Field(
@@ -145,7 +144,7 @@ def load_candidate_profile(path: str | Path) -> CandidateProfile:
             f"Copy profile/candidate.example.yaml to {path} and fill in your details."
         )
 
-    with open(path, "r") as f:
+    with open(path) as f:
         data = yaml.safe_load(f)
 
     return CandidateProfile(**data)

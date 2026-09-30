@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import abc
-from typing import Optional
 
 
 class LLMProvider(abc.ABC):
@@ -33,9 +32,8 @@ class LLMProvider(abc.ABC):
         """Generate a completion."""
         ...
 
-    async def close(self) -> None:
-        """Clean up resources."""
-        pass
+    async def close(self) -> None:  # noqa: B027
+        """Clean up resources. Override in subclasses if needed."""
 
 
 class NoLLMProvider(LLMProvider):

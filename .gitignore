@@ -58,4 +58,7 @@ htmlcov/
 
 # Alembic auto-generated
 # Keep migrations tracked
+
+# Planning artifacts
+implementation_plan.md
 implementation_plan.md

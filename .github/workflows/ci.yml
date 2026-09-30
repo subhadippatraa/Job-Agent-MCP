@@ -113,7 +113,7 @@ jobs:
           async def check():
               tools = await mcp.list_tools()
               print(f'Tools registered: {len(tools)}')
-              assert len(tools) >= 15, f'Expected >=15 tools, got {len(tools)}'
+              assert len(tools) >= 17, f'Expected >=17 tools, got {len(tools)}'
               for t in sorted(tools, key=lambda x: x.name):
                   print(f'  ✓ {t.name}')
               print('Server smoke test PASSED')

@@ -2,22 +2,20 @@
 
 from __future__ import annotations
 
-import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 from bs4 import BeautifulSoup
 
 from job_search_agent.config import get_settings
 from job_search_agent.logging import get_logger
-from job_search_agent.models.job import ATSProvider, Job, RemoteType
+from job_search_agent.models.job import ATSProvider, Job
 from job_search_agent.providers.base import JobProvider, ProviderResult, SearchQuery
 from job_search_agent.providers.greenhouse import (
     _detect_remote,
     _extract_experience,
     _extract_skills_from_text,
     _normalize_title,
-    _strip_html,
 )
 
 logger = get_logger(__name__)
@@ -116,7 +114,7 @@ class GenericProvider(JobProvider):
             canonical_url=url,
             application_url=url,
             ats_provider=ats_provider,
-            discovered_at=datetime.now(timezone.utc),
+            discovered_at=datetime.now(UTC),
         )
 
     def _extract_title(self, soup: BeautifulSoup) -> str:
@@ -125,6 +123,7 @@ class GenericProvider(JobProvider):
         for tag in soup.find_all("script", type="application/ld+json"):
             try:
                 import json
+
                 data = json.loads(tag.string or "")
                 if isinstance(data, dict) and data.get("@type") == "JobPosting":
                     return data.get("title", "Unknown")
@@ -133,8 +132,12 @@ class GenericProvider(JobProvider):
 
         # Try common title elements
         for selector in [
-            "h1.job-title", "h1.posting-headline", "h1[data-qa='job-title']",
-            ".job-title h1", ".job-header h1", "h1",
+            "h1.job-title",
+            "h1.posting-headline",
+            "h1[data-qa='job-title']",
+            ".job-title h1",
+            ".job-header h1",
+            "h1",
         ]:
             el = soup.select_one(selector)
             if el and el.get_text(strip=True):
@@ -158,6 +161,7 @@ class GenericProvider(JobProvider):
         for tag in soup.find_all("script", type="application/ld+json"):
             try:
                 import json
+
                 data = json.loads(tag.string or "")
                 if isinstance(data, dict) and data.get("@type") == "JobPosting":
                     org = data.get("hiringOrganization", {})
@@ -173,6 +177,7 @@ class GenericProvider(JobProvider):
 
         # Extract from URL
         from urllib.parse import urlparse
+
         parsed = urlparse(url)
         domain_parts = parsed.hostname.split(".") if parsed.hostname else []
         if len(domain_parts) >= 2:
@@ -184,9 +189,14 @@ class GenericProvider(JobProvider):
         """Extract job description text."""
         # Try common description containers
         for selector in [
-            ".job-description", ".posting-description", ".job-details",
-            "[data-qa='job-description']", ".description", "article",
-            "main", ".content",
+            ".job-description",
+            ".posting-description",
+            ".job-details",
+            "[data-qa='job-description']",
+            ".description",
+            "article",
+            "main",
+            ".content",
         ]:
             el = soup.select_one(selector)
             if el:
@@ -207,6 +217,7 @@ class GenericProvider(JobProvider):
         for tag in soup.find_all("script", type="application/ld+json"):
             try:
                 import json
+
                 data = json.loads(tag.string or "")
                 if isinstance(data, dict) and data.get("@type") == "JobPosting":
                     loc = data.get("jobLocation", {})

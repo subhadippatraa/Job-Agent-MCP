@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta
-from typing import Optional
+from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import and_, desc, func, or_, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from job_search_agent.database import get_session
 from job_search_agent.database.models import (
     ApplicationRow,
     JobMatchRow,
@@ -17,9 +15,12 @@ from job_search_agent.database.models import (
     SearchRunRow,
     StatusHistoryRow,
 )
-from job_search_agent.models.application import Application, ApplicationStatusChange
+from job_search_agent.models.application import Application
 from job_search_agent.models.job import Job, JobStatus
 from job_search_agent.models.match import MatchResult
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _job_row_to_model(row: JobRow) -> Job:
@@ -122,9 +123,7 @@ class JobRepository:
 
     async def get_by_canonical_url(self, url: str) -> Job | None:
         """Find a job by its canonical URL (for duplicate detection)."""
-        result = await self.session.execute(
-            select(JobRow).where(JobRow.canonical_url == url)
-        )
+        result = await self.session.execute(select(JobRow).where(JobRow.canonical_url == url))
         row = result.scalar_one_or_none()
         return _job_row_to_model(row) if row else None
 
@@ -216,6 +215,24 @@ class JobRepository:
             update(JobRow)
             .where(JobRow.id == job_id)
             .values(match_score=score, updated_at=datetime.utcnow())
+        )
+        await self.session.flush()
+        return result.rowcount > 0  # type: ignore[union-attr]
+
+    async def update_job(self, job: Job) -> bool:
+        """Update a job's skills, experience, and other extracted data."""
+        values: dict = {"updated_at": datetime.utcnow()}
+        if job.required_skills:
+            values["required_skills_json"] = json.dumps(job.required_skills)
+        if job.preferred_skills:
+            values["preferred_skills_json"] = json.dumps(job.preferred_skills)
+        if job.min_experience is not None:
+            values["min_experience"] = job.min_experience
+        if job.max_experience is not None:
+            values["max_experience"] = job.max_experience
+
+        result = await self.session.execute(
+            update(JobRow).where(JobRow.id == job.id).values(**values)
         )
         await self.session.flush()
         return result.rowcount > 0  # type: ignore[union-attr]
@@ -360,10 +377,7 @@ class ApplicationRepository:
         limit: int = 50,
     ) -> list[dict]:
         """Search applications with filters. Returns joined job+application data."""
-        query = (
-            select(ApplicationRow, JobRow)
-            .join(JobRow, ApplicationRow.job_id == JobRow.id)
-        )
+        query = select(ApplicationRow, JobRow).join(JobRow, ApplicationRow.job_id == JobRow.id)
         conditions = []
 
         if status:
@@ -385,26 +399,28 @@ class ApplicationRepository:
 
         apps = []
         for app_row, job_row in result.all():
-            apps.append({
-                "application": Application(
-                    id=app_row.id,
-                    job_id=app_row.job_id,
-                    status=app_row.status,
-                    applied_at=app_row.applied_at,
-                    resume_version=app_row.resume_version,
-                    application_url=app_row.application_url,
-                    notes=app_row.notes,
-                    source=app_row.source,
-                    created_at=app_row.created_at,
-                    updated_at=app_row.updated_at,
-                ).model_dump(mode="json"),
-                "job": {
-                    "company": job_row.company,
-                    "title": job_row.title,
-                    "location": job_row.location,
-                    "match_score": job_row.match_score,
-                },
-            })
+            apps.append(
+                {
+                    "application": Application(
+                        id=app_row.id,
+                        job_id=app_row.job_id,
+                        status=app_row.status,
+                        applied_at=app_row.applied_at,
+                        resume_version=app_row.resume_version,
+                        application_url=app_row.application_url,
+                        notes=app_row.notes,
+                        source=app_row.source,
+                        created_at=app_row.created_at,
+                        updated_at=app_row.updated_at,
+                    ).model_dump(mode="json"),
+                    "job": {
+                        "company": job_row.company,
+                        "title": job_row.title,
+                        "location": job_row.location,
+                        "match_score": job_row.match_score,
+                    },
+                }
+            )
         return apps
 
     async def check_company_applied(self, company: str) -> list[dict]:
@@ -434,14 +450,21 @@ class ApplicationRepository:
 
         status_counts = {}
         for status in [
-            "discovered", "analyzed", "shortlisted", "prepared",
-            "applied", "assessment", "recruiter_screen", "interview",
-            "rejected", "offer", "withdrawn", "skipped",
+            "discovered",
+            "analyzed",
+            "shortlisted",
+            "prepared",
+            "applied",
+            "assessment",
+            "recruiter_screen",
+            "interview",
+            "rejected",
+            "offer",
+            "withdrawn",
+            "skipped",
         ]:
             count = await session.scalar(
-                select(func.count(ApplicationRow.id)).where(
-                    ApplicationRow.status == status
-                )
+                select(func.count(ApplicationRow.id)).where(ApplicationRow.status == status)
             )
             status_counts[status] = count or 0
 
@@ -497,11 +520,17 @@ class MatchRepository:
             experience_match=row.experience_match,
             location_match=row.location_match,
             matched_skills=json.loads(row.matched_skills_json) if row.matched_skills_json else [],
-            missing_required_skills=json.loads(row.missing_required_json) if row.missing_required_json else [],
-            missing_preferred_skills=json.loads(row.missing_preferred_json) if row.missing_preferred_json else [],
+            missing_required_skills=json.loads(row.missing_required_json)
+            if row.missing_required_json
+            else [],
+            missing_preferred_skills=json.loads(row.missing_preferred_json)
+            if row.missing_preferred_json
+            else [],
             strengths=json.loads(row.strengths_json) if row.strengths_json else [],
             concerns=json.loads(row.concerns_json) if row.concerns_json else [],
-            breakdown=ScoreBreakdown.model_validate_json(row.breakdown_json) if row.breakdown_json else None,
+            breakdown=ScoreBreakdown.model_validate_json(row.breakdown_json)
+            if row.breakdown_json
+            else None,
             experience_gap=row.experience_gap,
         )
 

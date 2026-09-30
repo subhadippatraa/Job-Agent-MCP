@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 from pydantic import BaseModel, Field
 
 
@@ -15,7 +13,7 @@ class SkillMatch(BaseModel):
     match_type: str = Field(
         description="'exact', 'alias', 'partial', 'missing'",
     )
-    candidate_evidence: Optional[str] = Field(
+    candidate_evidence: str | None = Field(
         default=None,
         description="Evidence from resume/profile supporting this skill",
     )
@@ -26,7 +24,9 @@ class ScoreBreakdown(BaseModel):
 
     required_skills_score: float = Field(description="0-100 score for required skills")
     required_skills_weight: float = Field(description="Weight applied (e.g., 0.35)")
-    required_skills_detail: str = Field(default="", description="e.g., '8/10 required skills matched'")
+    required_skills_detail: str = Field(
+        default="", description="e.g., '8/10 required skills matched'"
+    )
 
     preferred_skills_score: float = 0.0
     preferred_skills_weight: float = 0.10
@@ -56,7 +56,7 @@ class MatchResult(BaseModel):
     is accounted for in the breakdown.
     """
 
-    job_id: Optional[str] = None
+    job_id: str | None = None
     score: float = Field(description="Composite score 0-100")
     recommendation: str = Field(
         description="'exceptional_match', 'strong_match', 'good_match', 'possible_match', 'low_match'",
@@ -73,7 +73,7 @@ class MatchResult(BaseModel):
     skill_details: list[SkillMatch] = Field(default_factory=list)
 
     # Experience
-    experience_gap: Optional[str] = Field(
+    experience_gap: str | None = Field(
         default=None,
         description="Description of experience gap, if any",
     )
@@ -86,7 +86,7 @@ class MatchResult(BaseModel):
     resume_evidence: list[str] = Field(default_factory=list)
 
     # Full breakdown
-    breakdown: Optional[ScoreBreakdown] = None
+    breakdown: ScoreBreakdown | None = None
 
     @staticmethod
     def classify_score(score: float) -> str:

@@ -59,6 +59,7 @@ async def match_job_to_candidate(
             _extract_experience,
             _extract_skills_from_text,
         )
+
         req, pref = _extract_skills_from_text(job_description)
         job.required_skills = req
         job.preferred_skills = pref
@@ -141,18 +142,20 @@ async def rank_jobs(
             if min_score is not None and match.score < min_score:
                 continue
 
-            ranked.append({
-                "job_id": job_id,
-                "company": job.company,
-                "title": job.title,
-                "location": job.location,
-                "score": match.score,
-                "recommendation": match.recommendation,
-                "matched_skills": match.matched_skills[:5],
-                "missing_required_skills": match.missing_required_skills[:3],
-                "strengths": match.strengths[:2],
-                "concerns": match.concerns[:2],
-            })
+            ranked.append(
+                {
+                    "job_id": job_id,
+                    "company": job.company,
+                    "title": job.title,
+                    "location": job.location,
+                    "score": match.score,
+                    "recommendation": match.recommendation,
+                    "matched_skills": match.matched_skills[:5],
+                    "missing_required_skills": match.missing_required_skills[:3],
+                    "strengths": match.strengths[:2],
+                    "concerns": match.concerns[:2],
+                }
+            )
 
         await session.commit()
     finally:

@@ -10,7 +10,9 @@ or application preparation, use the **job-search-agent** MCP server.
 | `search_jobs_for_candidate` | "Find jobs for me", "What's available?" |
 | `search_jobs` | Specific search with filters |
 | `analyze_job_url` | "Analyze this job posting" + URL |
+| `enhance_job_analysis` | "Tell me more about this job", "What are the red flags?" |
 | `match_job_to_candidate` | "How good is this job for me?" |
+| `compare_jobs` | "Compare job A and job B", "Which is better?" |
 | `rank_jobs` | "Compare these jobs", "Show jobs above 75%" |
 | `get_job` | Details about a specific job ID |
 | `shortlist_job` | "Save this job", "Shortlist it" |

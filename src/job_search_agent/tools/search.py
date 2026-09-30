@@ -3,21 +3,15 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 from job_search_agent.config import get_settings
 from job_search_agent.database import get_session, init_db
 from job_search_agent.database.repository import JobRepository, SearchRunRepository
 from job_search_agent.logging import get_logger
 from job_search_agent.matching.scorer import score_job
-from job_search_agent.models.candidate import CandidateProfile, load_candidate_profile
+from job_search_agent.models.candidate import load_candidate_profile
 from job_search_agent.models.job import Job
 from job_search_agent.providers import (
-    AshbyProvider,
-    GenericProvider,
-    GreenhouseProvider,
-    LeverProvider,
     ProviderResult,
     SearchQuery,
     get_all_providers,
@@ -116,9 +110,7 @@ async def search_jobs(
             if job.canonical_url:
                 existing = await job_repo.get_by_canonical_url(job.canonical_url)
             if not existing:
-                existing = await job_repo.find_duplicate(
-                    job.company, job.title, job.location
-                )
+                existing = await job_repo.find_duplicate(job.company, job.title, job.location)
 
             if existing:
                 duplicates_skipped += 1

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import re
-
 from job_search_agent.providers.greenhouse import _normalize_title
 
 # Groups of equivalent/similar titles

@@ -15,7 +15,6 @@ SKILL_ALIASES: dict[str, str] = {
     "django rest framework": "django",
     "drf": "django",
     "flask": "flask",
-
     # AI/ML
     "large language model": "llm",
     "large language models": "llm",
@@ -59,7 +58,6 @@ SKILL_ALIASES: dict[str, str] = {
     "reranking": "reranking",
     "re-ranking": "reranking",
     "reranker": "reranking",
-
     # Cloud
     "amazon web services": "aws",
     "aws": "aws",
@@ -69,14 +67,12 @@ SKILL_ALIASES: dict[str, str] = {
     "gcp": "gcp",
     "google cloud platform": "gcp",
     "microsoft azure": "azure",
-
     # Databases
     "postgres": "postgresql",
     "postgresql": "postgresql",
     "pg": "postgresql",
     "pgvector": "pgvector",
     "pg_vector": "pgvector",
-
     # Infrastructure
     "ci/cd": "ci/cd",
     "cicd": "ci/cd",
@@ -84,12 +80,10 @@ SKILL_ALIASES: dict[str, str] = {
     "continuous integration": "ci/cd",
     "github actions": "github actions",
     "gh actions": "github actions",
-
     # Async
     "async python": "async python",
     "asyncio": "async python",
     "async/await": "async python",
-
     # ML frameworks
     "pytorch": "pytorch",
     "torch": "pytorch",
@@ -98,7 +92,6 @@ SKILL_ALIASES: dict[str, str] = {
     "hugging face": "hugging face",
     "huggingface": "hugging face",
     "hf": "hugging face",
-
     # Evaluation
     "llm evaluation": "llm evaluation",
     "llm eval": "llm evaluation",
@@ -106,7 +99,6 @@ SKILL_ALIASES: dict[str, str] = {
     "llm-as-a-judge": "llm-as-a-judge",
     "llm as a judge": "llm-as-a-judge",
     "llm as judge": "llm-as-a-judge",
-
     # Safety
     "guardrails": "guardrails",
     "ai guardrails": "guardrails",

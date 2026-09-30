@@ -6,7 +6,10 @@ from datetime import datetime
 
 from job_search_agent.config import get_settings
 from job_search_agent.database import get_session, init_db
-from job_search_agent.database.repository import ApplicationRepository, JobRepository, MatchRepository
+from job_search_agent.database.repository import (
+    ApplicationRepository,
+    JobRepository,
+)
 from job_search_agent.logging import get_logger
 from job_search_agent.matching.scorer import score_job
 from job_search_agent.models.application import Application, ApplicationPrep
@@ -290,9 +293,18 @@ async def update_application_status(
         notes: Optional notes about the status change
     """
     valid_statuses = {
-        "discovered", "analyzed", "shortlisted", "prepared", "applied",
-        "assessment", "recruiter_screen", "interview", "rejected",
-        "offer", "withdrawn", "skipped",
+        "discovered",
+        "analyzed",
+        "shortlisted",
+        "prepared",
+        "applied",
+        "assessment",
+        "recruiter_screen",
+        "interview",
+        "rejected",
+        "offer",
+        "withdrawn",
+        "skipped",
     }
     if status not in valid_statuses:
         return {"error": f"Invalid status: {status}. Valid: {sorted(valid_statuses)}"}
@@ -308,7 +320,7 @@ async def update_application_status(
         if not app:
             return {"error": f"No application found for job: {job_id}"}
 
-        updated = await app_repo.update_status(app.id, status, notes)
+        await app_repo.update_status(app.id, status, notes)
         await job_repo.update_status(job_id, status)
         await session.commit()
 
@@ -349,6 +361,7 @@ async def get_applications(
         since = None
         if days:
             from datetime import timedelta
+
             since = datetime.utcnow() - timedelta(days=days)
 
         apps = await repo.search(
@@ -372,10 +385,16 @@ def _predict_screening_questions(job, candidate: CandidateProfile) -> list[str]:
     questions = []
 
     if job.min_experience:
-        questions.append(f"How many years of relevant experience do you have? (Job asks for {job.min_experience}+)")
+        questions.append(
+            f"How many years of relevant experience do you have? (Job asks for {job.min_experience}+)"
+        )
 
     if any(s.lower() in ["python", "java", "go"] for s in job.required_skills):
-        lang = [s for s in job.required_skills if s.lower() in ["python", "java", "go", "rust", "typescript"]]
+        lang = [
+            s
+            for s in job.required_skills
+            if s.lower() in ["python", "java", "go", "rust", "typescript"]
+        ]
         if lang:
             questions.append(f"Rate your proficiency in {', '.join(lang)}")
 
@@ -383,12 +402,14 @@ def _predict_screening_questions(job, candidate: CandidateProfile) -> list[str]:
         questions.append("Are you willing to work on-site/hybrid?")
 
     # Standard questions
-    questions.extend([
-        "Are you authorized to work in this country?",
-        "What is your expected salary range?",
-        "What is your notice period / earliest start date?",
-        "Are you willing to undergo a background check?",
-    ])
+    questions.extend(
+        [
+            "Are you authorized to work in this country?",
+            "What is your expected salary range?",
+            "What is your notice period / earliest start date?",
+            "Are you willing to undergo a background check?",
+        ]
+    )
 
     return questions
 
@@ -403,11 +424,13 @@ def _build_checklist(job, candidate: CandidateProfile) -> list[str]:
     if job.required_skills:
         checklist.append("Verify you address key required skills in your application")
 
-    checklist.extend([
-        "Prepare answers for likely screening questions",
-        "Research the company",
-        "Check application URL is accessible",
-    ])
+    checklist.extend(
+        [
+            "Prepare answers for likely screening questions",
+            "Research the company",
+            "Check application URL is accessible",
+        ]
+    )
 
     if candidate.links.get("linkedin"):
         checklist.append("Ensure LinkedIn profile is up to date")

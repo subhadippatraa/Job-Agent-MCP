@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from job_search_agent.matching.experience import compute_experience_score
 from job_search_agent.matching.scorer import score_job
 from job_search_agent.matching.skills import (
@@ -12,7 +10,6 @@ from job_search_agent.matching.skills import (
     match_skills,
 )
 from job_search_agent.matching.titles import compute_title_similarity
-from job_search_agent.models.candidate import CandidateProfile
 from job_search_agent.models.job import Job
 
 
@@ -95,28 +92,20 @@ class TestExperienceMatching:
 
 class TestTitleSimilarity:
     def test_exact_match(self):
-        score, _ = compute_title_similarity(
-            ["AI Engineer"], "AI Engineer"
-        )
+        score, _ = compute_title_similarity(["AI Engineer"], "AI Engineer")
         assert score == 100.0
 
     def test_close_match(self):
-        score, _ = compute_title_similarity(
-            ["AI Engineer"], "Senior AI Engineer"
-        )
+        score, _ = compute_title_similarity(["AI Engineer"], "Senior AI Engineer")
         # "senior" is stripped in normalization, so this should match
         assert score >= 85.0
 
     def test_same_group(self):
-        score, _ = compute_title_similarity(
-            ["AI Engineer"], "Machine Learning Engineer"
-        )
+        score, _ = compute_title_similarity(["AI Engineer"], "Machine Learning Engineer")
         assert score >= 80.0
 
     def test_weak_match(self):
-        score, _ = compute_title_similarity(
-            ["AI Engineer"], "Full Stack Software Engineer"
-        )
+        score, _ = compute_title_similarity(["AI Engineer"], "Full Stack Software Engineer")
         assert score <= 60.0
 
 
@@ -140,7 +129,9 @@ class TestCompositeScoring:
         result = score_job(generic_swe_job, sample_candidate)
         ai_result = score_job(
             Job(
-                id="x", company="X", title="AI Engineer",
+                id="x",
+                company="X",
+                title="AI Engineer",
                 required_skills=["Python", "RAG", "LangChain", "FastAPI"],
                 min_experience=1,
             ),
@@ -168,6 +159,7 @@ class TestCompositeScoring:
 
     def test_recommendation_labels(self):
         from job_search_agent.models.match import MatchResult
+
         assert MatchResult.classify_score(95) == "exceptional_match"
         assert MatchResult.classify_score(85) == "strong_match"
         assert MatchResult.classify_score(75) == "good_match"

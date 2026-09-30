@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import contextlib
 import re
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 import httpx
 from bs4 import BeautifulSoup
@@ -144,10 +144,8 @@ class GreenhouseProvider(JobProvider):
         # Posted date
         posted_at = None
         if raw.get("updated_at"):
-            try:
+            with contextlib.suppress(ValueError, AttributeError):
                 posted_at = datetime.fromisoformat(raw["updated_at"].replace("Z", "+00:00"))
-            except (ValueError, AttributeError):
-                pass
 
         job_id = str(raw.get("id", ""))
         job_url = f"https://boards.greenhouse.io/{board_token}/jobs/{job_id}"
@@ -171,7 +169,7 @@ class GreenhouseProvider(JobProvider):
             application_url=raw.get("absolute_url"),
             ats_provider=ATSProvider.GREENHOUSE,
             posted_at=posted_at,
-            discovered_at=datetime.now(timezone.utc),
+            discovered_at=datetime.now(UTC),
             department=_extract_department(raw),
         )
 
@@ -197,11 +195,11 @@ class GreenhouseProvider(JobProvider):
                 return False
 
         # Experience filter
-        if query.experience_max is not None and job.min_experience is not None:
-            if job.min_experience > query.experience_max + 1:  # +1 grace
-                return False
-
-        return True
+        return not (
+            query.experience_max is not None
+            and job.min_experience is not None
+            and job.min_experience > query.experience_max + 1  # +1 grace
+        )
 
     async def fetch_job(self, job_url: str) -> Job | None:
         """Fetch a single job by its Greenhouse URL."""
@@ -243,13 +241,23 @@ def _normalize_title(title: str) -> str:
     """Normalize a job title for matching."""
     title = title.lower().strip()
     # Remove common prefixes/suffixes
-    for prefix in ["senior ", "sr. ", "sr ", "junior ", "jr. ", "jr ", "lead ", "staff ", "principal "]:
+    for prefix in [
+        "senior ",
+        "sr. ",
+        "sr ",
+        "junior ",
+        "jr. ",
+        "jr ",
+        "lead ",
+        "staff ",
+        "principal ",
+    ]:
         if title.startswith(prefix):
-            title = title[len(prefix):]
+            title = title[len(prefix) :]
     # Remove parenthetical clarifications
-    title = re.sub(r'\([^)]*\)', '', title).strip()
+    title = re.sub(r"\([^)]*\)", "", title).strip()
     # Remove extra whitespace
-    title = re.sub(r'\s+', ' ', title)
+    title = re.sub(r"\s+", " ", title)
     return title
 
 
@@ -272,12 +280,12 @@ def _extract_experience(text: str) -> tuple[int | None, int | None]:
     """
     # Common patterns: "3+ years", "3-5 years", "3 to 5 years", "minimum 3 years"
     patterns = [
-        r'(\d+)\s*[-–to]+\s*(\d+)\s*(?:\+\s*)?years?\s*(?:of\s+)?(?:experience|exp)',
-        r'(\d+)\+?\s*years?\s*(?:of\s+)?(?:experience|exp)',
-        r'minimum\s*(?:of\s+)?(\d+)\s*years?',
-        r'at\s*least\s*(\d+)\s*years?',
-        r'(\d+)\s*[-–to]+\s*(\d+)\s*(?:\+\s*)?(?:yrs?|years?)',
-        r'(\d+)\+?\s*(?:yrs?)\s*(?:of\s+)?(?:experience|exp)',
+        r"(\d+)\s*[-–to]+\s*(\d+)\s*(?:\+\s*)?years?\s*(?:of\s+)?(?:experience|exp)",
+        r"(\d+)\+?\s*years?\s*(?:of\s+)?(?:experience|exp)",
+        r"minimum\s*(?:of\s+)?(\d+)\s*years?",
+        r"at\s*least\s*(\d+)\s*years?",
+        r"(\d+)\s*[-–to]+\s*(\d+)\s*(?:\+\s*)?(?:yrs?|years?)",
+        r"(\d+)\+?\s*(?:yrs?)\s*(?:of\s+)?(?:experience|exp)",
     ]
 
     text_lower = text.lower()
@@ -302,21 +310,70 @@ def _extract_skills_from_text(text: str) -> tuple[list[str], list[str]]:
     """
     # Common technical skills to look for
     known_skills = [
-        "Python", "JavaScript", "TypeScript", "Java", "Go", "Rust", "C++",
-        "React", "Next.js", "Node.js", "FastAPI", "Django", "Flask",
-        "AWS", "GCP", "Azure", "Docker", "Kubernetes", "Terraform",
-        "PostgreSQL", "MySQL", "MongoDB", "Redis", "Elasticsearch",
-        "LangChain", "LangGraph", "LlamaIndex", "RAG", "LLM",
-        "OpenAI", "Anthropic", "GPT", "Claude", "Gemini",
-        "PyTorch", "TensorFlow", "Hugging Face", "MLOps",
-        "CI/CD", "GitHub Actions", "Jenkins",
-        "REST", "GraphQL", "gRPC",
-        "Pydantic", "SQLAlchemy", "Celery",
-        "pgvector", "Pinecone", "Weaviate", "ChromaDB",
-        "Embeddings", "Vector Search", "Semantic Search",
-        "Machine Learning", "Deep Learning", "NLP", "Computer Vision",
-        "Agents", "Multi-Agent", "Tool Calling", "Function Calling",
-        "MCP", "Model Context Protocol",
+        "Python",
+        "JavaScript",
+        "TypeScript",
+        "Java",
+        "Go",
+        "Rust",
+        "C++",
+        "React",
+        "Next.js",
+        "Node.js",
+        "FastAPI",
+        "Django",
+        "Flask",
+        "AWS",
+        "GCP",
+        "Azure",
+        "Docker",
+        "Kubernetes",
+        "Terraform",
+        "PostgreSQL",
+        "MySQL",
+        "MongoDB",
+        "Redis",
+        "Elasticsearch",
+        "LangChain",
+        "LangGraph",
+        "LlamaIndex",
+        "RAG",
+        "LLM",
+        "OpenAI",
+        "Anthropic",
+        "GPT",
+        "Claude",
+        "Gemini",
+        "PyTorch",
+        "TensorFlow",
+        "Hugging Face",
+        "MLOps",
+        "CI/CD",
+        "GitHub Actions",
+        "Jenkins",
+        "REST",
+        "GraphQL",
+        "gRPC",
+        "Pydantic",
+        "SQLAlchemy",
+        "Celery",
+        "pgvector",
+        "Pinecone",
+        "Weaviate",
+        "ChromaDB",
+        "Embeddings",
+        "Vector Search",
+        "Semantic Search",
+        "Machine Learning",
+        "Deep Learning",
+        "NLP",
+        "Computer Vision",
+        "Agents",
+        "Multi-Agent",
+        "Tool Calling",
+        "Function Calling",
+        "MCP",
+        "Model Context Protocol",
     ]
 
     text_lower = text.lower()
@@ -329,7 +386,7 @@ def _extract_skills_from_text(text: str) -> tuple[list[str], list[str]]:
 
     # Look for "Required" / "Must have" sections
     req_match = re.search(
-        r'(?:required|must\s+have|requirements|qualifications)[:\s]*(.*?)(?=preferred|nice|bonus|about|$)',
+        r"(?:required|must\s+have|requirements|qualifications)[:\s]*(.*?)(?=preferred|nice|bonus|about|$)",
         text_lower,
         re.DOTALL,
     )
@@ -337,7 +394,7 @@ def _extract_skills_from_text(text: str) -> tuple[list[str], list[str]]:
         req_section = req_match.group(1)
 
     pref_match = re.search(
-        r'(?:preferred|nice\s+to\s+have|bonus|plus)[:\s]*(.*?)(?=about|$)',
+        r"(?:preferred|nice\s+to\s+have|bonus|plus)[:\s]*(.*?)(?=about|$)",
         text_lower,
         re.DOTALL,
     )

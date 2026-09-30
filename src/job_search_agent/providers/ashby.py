@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import re
-from datetime import datetime, timezone
+import contextlib
+from datetime import UTC, datetime
 
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -168,12 +168,8 @@ class AshbyProvider(JobProvider):
         # Timestamps
         posted_at = None
         if raw.get("publishedAt"):
-            try:
-                posted_at = datetime.fromisoformat(
-                    raw["publishedAt"].replace("Z", "+00:00")
-                )
-            except (ValueError, AttributeError):
-                pass
+            with contextlib.suppress(ValueError, AttributeError):
+                posted_at = datetime.fromisoformat(raw["publishedAt"].replace("Z", "+00:00"))
 
         job_url = raw.get("jobUrl", "")
         apply_url = raw.get("applyUrl", job_url)
@@ -201,7 +197,7 @@ class AshbyProvider(JobProvider):
             application_url=apply_url,
             ats_provider=ATSProvider.ASHBY,
             posted_at=posted_at,
-            discovered_at=datetime.now(timezone.utc),
+            discovered_at=datetime.now(UTC),
             department=raw.get("department"),
             team=raw.get("team"),
         )
@@ -224,11 +220,11 @@ class AshbyProvider(JobProvider):
             if loc_lower not in job_loc and job.remote_type not in ("remote", RemoteType.REMOTE):
                 return False
 
-        if query.experience_max is not None and job.min_experience is not None:
-            if job.min_experience > query.experience_max + 1:
-                return False
-
-        return True
+        return not (
+            query.experience_max is not None
+            and job.min_experience is not None
+            and job.min_experience > query.experience_max + 1
+        )
 
     async def fetch_job(self, job_url: str) -> Job | None:
         """Fetch a single Ashby job by URL. Limited since Ashby has no single-job public endpoint."""

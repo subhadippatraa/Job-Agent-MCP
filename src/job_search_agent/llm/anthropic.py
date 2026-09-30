@@ -15,9 +15,12 @@ class AnthropicProvider(LLMProvider):
         self.model = model
         try:
             from anthropic import AsyncAnthropic
+
             self._client = AsyncAnthropic(api_key=api_key)
         except ImportError:
-            raise ImportError("Anthropic package required. Install with: pip install anthropic")
+            raise ImportError(
+                "Anthropic package required. Install with: pip install anthropic"
+            ) from None
 
     @property
     def name(self) -> str:

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import contextlib
 import re
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -18,7 +18,6 @@ from job_search_agent.providers.greenhouse import (
     _extract_experience,
     _extract_skills_from_text,
     _normalize_title,
-    _strip_html,
 )
 
 logger = get_logger(__name__)
@@ -149,10 +148,8 @@ class LeverProvider(JobProvider):
         posted_at = None
         created_at_ms = raw.get("createdAt")
         if created_at_ms:
-            try:
-                posted_at = datetime.fromtimestamp(created_at_ms / 1000, tz=timezone.utc)
-            except (ValueError, OSError):
-                pass
+            with contextlib.suppress(ValueError, OSError):
+                posted_at = datetime.fromtimestamp(created_at_ms / 1000, tz=UTC)
 
         job_url = raw.get("hostedUrl", f"https://jobs.lever.co/{company_slug}/{raw.get('id', '')}")
         apply_url = raw.get("applyUrl", job_url)
@@ -179,7 +176,7 @@ class LeverProvider(JobProvider):
             application_url=apply_url,
             ats_provider=ATSProvider.LEVER,
             posted_at=posted_at,
-            discovered_at=datetime.now(timezone.utc),
+            discovered_at=datetime.now(UTC),
             department=department,
             team=team,
         )
@@ -202,11 +199,11 @@ class LeverProvider(JobProvider):
             if loc_lower not in job_loc and job.remote_type not in ("remote", RemoteType.REMOTE):
                 return False
 
-        if query.experience_max is not None and job.min_experience is not None:
-            if job.min_experience > query.experience_max + 1:
-                return False
-
-        return True
+        return not (
+            query.experience_max is not None
+            and job.min_experience is not None
+            and job.min_experience > query.experience_max + 1
+        )
 
     async def fetch_job(self, job_url: str) -> Job | None:
         """Fetch a single job by its Lever URL."""
