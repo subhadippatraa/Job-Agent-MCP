@@ -56,9 +56,11 @@ class Settings(BaseSettings):
     max_retries: int = Field(default=3, alias="MAX_RETRIES")
 
     # Provider boards (comma-separated strings parsed to lists)
-    greenhouse_boards: list[str] = Field(default_factory=list, alias="GREENHOUSE_BOARDS")
-    lever_companies: list[str] = Field(default_factory=list, alias="LEVER_COMPANIES")
-    ashby_boards: list[str] = Field(default_factory=list, alias="ASHBY_BOARDS")
+    greenhouse_boards: list[str] = Field(
+        default_factory=lambda: ["stripe", "figma"], alias="GREENHOUSE_BOARDS"
+    )
+    lever_companies: list[str] = Field(default_factory=lambda: ["netflix"], alias="LEVER_COMPANIES")
+    ashby_boards: list[str] = Field(default_factory=lambda: ["linear"], alias="ASHBY_BOARDS")
 
     # LLM
     openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")
