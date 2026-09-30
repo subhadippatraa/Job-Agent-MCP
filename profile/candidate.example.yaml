@@ -1,0 +1,184 @@
+# =============================================================================
+# Candidate Profile — Edit this file with YOUR information
+# =============================================================================
+# Copy this file to profile/candidate.yaml before using.
+# All sensitive fields are optional — the system will never invent values.
+
+name: "Your Name"
+email: null  # Optional — only used if you want it in application prep
+phone: null  # Optional
+current_location: "India"
+
+# Total relevant experience in years (decimal OK)
+years_experience: 1.8
+
+# Target roles — the system will search for these
+target_roles:
+  - "AI Engineer"
+  - "Generative AI Engineer"
+  - "LLM Engineer"
+  - "RAG Engineer"
+  - "Agentic AI Engineer"
+  - "Applied AI Engineer"
+  - "AI Backend Engineer"
+  - "Python GenAI Engineer"
+  - "AI Platform Engineer"
+
+# Location preferences
+preferred_locations:
+  - "Remote"
+  - "Bangalore"
+  - "Hyderabad"
+  - "India"
+
+preferred_countries:
+  - "India"
+  - "US"
+  - "UK"
+  - "Germany"
+  - "Canada"
+
+# 'remote_only', 'onsite_only', 'hybrid', 'flexible'
+remote_preference: "flexible"
+
+# ---------------------------------------------------------------------------
+# Skills
+# ---------------------------------------------------------------------------
+# Primary = core strengths, Secondary = supporting skills
+# The 'skills' field is a combined flat list for simple matching.
+
+primary_skills:
+  - "Python"
+  - "FastAPI"
+  - "Pydantic"
+  - "RAG"
+  - "LangGraph"
+  - "LangChain"
+  - "AI Agents"
+  - "Multi-Agent Systems"
+  - "MCP"
+  - "Tool Calling"
+  - "OpenAI API"
+  - "Anthropic API"
+  - "Embeddings"
+  - "Hybrid Search"
+  - "Reranking"
+  - "LLM Evaluation"
+
+secondary_skills:
+  - "REST APIs"
+  - "Async Python"
+  - "AWS Bedrock"
+  - "LLM-as-a-Judge"
+  - "Guardrails"
+  - "PostgreSQL"
+  - "pgvector"
+  - "Redis"
+  - "Pinecone"
+  - "HNSW"
+  - "Full-text Search"
+  - "Docker"
+  - "AWS"
+  - "GitHub Actions"
+  - "CI/CD"
+
+skills:
+  - "Python"
+  - "FastAPI"
+  - "Pydantic"
+  - "REST APIs"
+  - "Async Python"
+  - "RAG"
+  - "Embeddings"
+  - "Hybrid Search"
+  - "Reranking"
+  - "LangGraph"
+  - "LangChain"
+  - "AI Agents"
+  - "Multi-Agent Systems"
+  - "MCP"
+  - "Tool Calling"
+  - "OpenAI API"
+  - "Anthropic API"
+  - "AWS Bedrock"
+  - "LLM Evaluation"
+  - "LLM-as-a-Judge"
+  - "Guardrails"
+  - "PostgreSQL"
+  - "pgvector"
+  - "Redis"
+  - "Pinecone"
+  - "HNSW"
+  - "Full-text Search"
+  - "Docker"
+  - "AWS"
+  - "GitHub Actions"
+  - "CI/CD"
+
+# ---------------------------------------------------------------------------
+# Work History (fill in your actual positions)
+# ---------------------------------------------------------------------------
+work_history: []
+  # - company: "Example Corp"
+  #   title: "AI Engineer"
+  #   start_date: "2024-01"
+  #   end_date: null  # null = present
+  #   description: "Built RAG pipelines and multi-agent systems."
+  #   technologies:
+  #     - "Python"
+  #     - "LangGraph"
+  #     - "FastAPI"
+
+# ---------------------------------------------------------------------------
+# Projects (fill in your actual projects)
+# ---------------------------------------------------------------------------
+projects: []
+  # - name: "AI Assistant Platform"
+  #   description: "Multi-agent system with LangGraph orchestration."
+  #   technologies: ["LangGraph", "FastAPI", "PostgreSQL", "pgvector"]
+  #   url: "https://github.com/..."
+
+# ---------------------------------------------------------------------------
+# Education
+# ---------------------------------------------------------------------------
+education: []
+  # - institution: "University Name"
+  #   degree: "B.Tech"
+  #   field: "Computer Science"
+  #   year: 2023
+
+# ---------------------------------------------------------------------------
+# Sensitive Information (all optional — system will ask if needed)
+# ---------------------------------------------------------------------------
+work_authorization: null   # e.g., "citizen", "work_permit", "visa_required"
+notice_period: null         # e.g., "30 days", "immediate", "60 days"
+
+salary_expectation: null
+  # min: 800000
+  # max: 1200000
+  # currency: "INR"
+  # period: "annual"
+
+# ---------------------------------------------------------------------------
+# Links
+# ---------------------------------------------------------------------------
+links: {}
+  # github: "https://github.com/yourname"
+  # linkedin: "https://linkedin.com/in/yourname"
+  # portfolio: "https://yoursite.com"
+
+# ---------------------------------------------------------------------------
+# Certifications
+# ---------------------------------------------------------------------------
+certifications: []
+  # - "AWS Certified Cloud Practitioner"
+
+# ---------------------------------------------------------------------------
+# Domain interests (helps with domain relevance scoring)
+# ---------------------------------------------------------------------------
+domain_interests:
+  - "AI/ML"
+  - "Generative AI"
+  - "Backend Engineering"
+  - "Developer Tools"
+  - "AI Infrastructure"

@@ -1,0 +1,61 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Resume files (user-specific, keep only README)
+resume/*.pdf
+resume/*.doc
+resume/*.docx
+resume/*.txt
+!resume/README.md
+
+# Candidate profile (user-specific, keep only example)
+profile/candidate.yaml
+!profile/candidate.example.yaml
+
+# Cache
+.cache/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Alembic auto-generated
+# Keep migrations tracked
+implementation_plan.md
