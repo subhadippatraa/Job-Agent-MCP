@@ -62,7 +62,11 @@ async def search_jobs(
         remote_only=remote_only,
         experience_min=experience_min,
         experience_max=experience_max,
-        posted_within_hours=posted_within_hours or settings.default_posted_within_hours,
+        posted_within_hours=(
+            posted_within_hours
+            if posted_within_hours is not None
+            else settings.default_posted_within_hours
+        ),
         skills=skills or [],
         limit=limit,
     )

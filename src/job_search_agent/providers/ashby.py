@@ -11,7 +11,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from job_search_agent.config import get_settings
 from job_search_agent.logging import get_logger
 from job_search_agent.models.job import ATSProvider, EmploymentType, Job, RemoteType
-from job_search_agent.providers.base import JobProvider, ProviderResult, SearchQuery
+from job_search_agent.providers.base import JobProvider, ProviderResult, SearchQuery, matches_query
 from job_search_agent.providers.greenhouse import (
     _detect_remote,
     _extract_experience,
@@ -102,7 +102,7 @@ class AshbyProvider(JobProvider):
         for raw_job in data.get("jobs", []):
             try:
                 job = self._normalize(raw_job, board)
-                if self._matches_query(job, query):
+                if matches_query(job, query):
                     jobs.append(job)
             except Exception as e:
                 logger.warning(
@@ -200,30 +200,6 @@ class AshbyProvider(JobProvider):
             discovered_at=datetime.now(UTC),
             department=raw.get("department"),
             team=raw.get("team"),
-        )
-
-    def _matches_query(self, job: Job, query: SearchQuery) -> bool:
-        """Filter a job against the search query."""
-        if query.roles or query.keywords:
-            search_terms = [r.lower() for r in query.roles] + [k.lower() for k in query.keywords]
-            title_lower = (job.title or "").lower()
-            desc_lower = (job.description or "").lower()
-            if not any(term in title_lower or term in desc_lower for term in search_terms):
-                return False
-
-        if query.remote_only and job.remote_type not in ("remote", RemoteType.REMOTE):
-            return False
-
-        if query.location:
-            loc_lower = query.location.lower()
-            job_loc = (job.location or "").lower()
-            if loc_lower not in job_loc and job.remote_type not in ("remote", RemoteType.REMOTE):
-                return False
-
-        return not (
-            query.experience_max is not None
-            and job.min_experience is not None
-            and job.min_experience > query.experience_max + 1
         )
 
     async def fetch_job(self, job_url: str) -> Job | None:
