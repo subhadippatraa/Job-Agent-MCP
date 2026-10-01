@@ -126,7 +126,7 @@ class ApplicationRow(Base):
 
     __table_args__ = (
         Index("ix_applications_status", "status"),
-        Index("ix_applications_job_id", "job_id"),
+        UniqueConstraint("job_id", name="uq_applications_job_id"),
     )
 
 

@@ -241,9 +241,9 @@ async def record_application(
 
         # Check if already applied
         existing = await app_repo.get_by_job_id(job_id)
-        if existing and existing.status == "applied":
+        if existing:
             return {
-                "error": "Already applied to this job",
+                "error": "Application already recorded for this job",
                 "application_id": existing.id,
                 "applied_at": existing.applied_at.isoformat() if existing.applied_at else None,
             }

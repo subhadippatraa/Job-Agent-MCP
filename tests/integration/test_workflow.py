@@ -49,6 +49,9 @@ async def test_application_workflow(tmp_path, monkeypatch, sample_candidate, ai_
     assert applications["total"] == 1
     stats = await get_job_stats()
     assert stats["applications"]["by_status"]["interview"] == 1
+    duplicate = await record_application(ai_engineer_job.id, user_confirmed=True)
+    assert duplicate["error"] == "Application already recorded for this job"
+    assert (await get_applications())["total"] == 1
 
     await close_db()
     reset_settings()
