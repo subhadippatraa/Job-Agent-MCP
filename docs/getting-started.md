@@ -51,10 +51,14 @@ Keep the default `.env` setting:
 DATABASE_URL=postgresql+asyncpg://jobagent:jobagent@localhost:5432/jobagent
 ```
 
-Then initialize tables:
+Then apply database migrations:
 ```bash
-job-search-agent init-db
+alembic upgrade head
 ```
+
+For a database created by an older version, first run `alembic stamp 0001`,
+then `alembic upgrade head`. Continue using `job-search-agent init-db` only for
+throwaway SQLite development databases.
 
 ## 4. Configure Job Sources
 
