@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from job_search_agent.llm.base import LLMProvider
 from job_search_agent.logging import get_logger
 
@@ -34,7 +36,7 @@ class AnthropicProvider(LLMProvider):
         temperature: float = 0.3,
     ) -> str:
         try:
-            kwargs = {
+            kwargs: dict[str, Any] = {
                 "model": self.model,
                 "max_tokens": max_tokens,
                 "messages": [{"role": "user", "content": prompt}],

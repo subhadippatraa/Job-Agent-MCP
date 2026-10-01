@@ -33,7 +33,7 @@ class GenericProvider(JobProvider):
     Does not perform automated search — only analyzes user-supplied URLs.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._client: httpx.AsyncClient | None = None
 
     @property
@@ -138,7 +138,7 @@ class GenericProvider(JobProvider):
 
                 data = json.loads(tag.string or "")
                 if isinstance(data, dict) and data.get("@type") == "JobPosting":
-                    return data.get("title", "Unknown")
+                    return str(data.get("title", "Unknown"))
             except (json.JSONDecodeError, AttributeError):
                 pass
 
@@ -178,14 +178,14 @@ class GenericProvider(JobProvider):
                 if isinstance(data, dict) and data.get("@type") == "JobPosting":
                     org = data.get("hiringOrganization", {})
                     if isinstance(org, dict):
-                        return org.get("name", "Unknown")
+                        return str(org.get("name", "Unknown"))
             except (json.JSONDecodeError, AttributeError):
                 pass
 
         # Try meta tags
         for meta in soup.find_all("meta", attrs={"property": "og:site_name"}):
             if meta.get("content"):
-                return meta["content"]
+                return str(meta["content"])
 
         # Extract from URL
         parsed = urlparse(url)

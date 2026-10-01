@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from typing import cast
 
 import structlog
 
@@ -64,4 +65,4 @@ def setup_logging(level: str = "INFO", fmt: str = "json") -> None:
 
 def get_logger(name: str) -> structlog.stdlib.BoundLogger:
     """Get a named structured logger."""
-    return structlog.get_logger(name)
+    return cast("structlog.stdlib.BoundLogger", structlog.get_logger(name))

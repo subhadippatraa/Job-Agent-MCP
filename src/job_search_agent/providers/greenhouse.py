@@ -391,5 +391,6 @@ def _extract_department(raw: dict) -> str | None:
     """Extract department from Greenhouse API response."""
     departments = raw.get("departments", [])
     if departments:
-        return departments[0].get("name")
+        name = departments[0].get("name")
+        return str(name) if name is not None else None
     return None

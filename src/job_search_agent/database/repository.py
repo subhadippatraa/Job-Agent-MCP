@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 from sqlalchemy import and_, desc, func, or_, select, update
 
@@ -15,11 +15,12 @@ from job_search_agent.database.models import (
     SearchRunRow,
     StatusHistoryRow,
 )
-from job_search_agent.models.application import Application
-from job_search_agent.models.job import Job, JobStatus
+from job_search_agent.models.application import Application, ApplicationStatus
+from job_search_agent.models.job import ATSProvider, EmploymentType, Job, JobStatus, RemoteType
 from job_search_agent.models.match import MatchResult
 
 if TYPE_CHECKING:
+    from sqlalchemy.engine import CursorResult
     from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -33,8 +34,8 @@ def _job_row_to_model(row: JobRow) -> Job:
         normalized_title=row.normalized_title,
         location=row.location,
         country=row.country,
-        remote_type=row.remote_type,
-        employment_type=row.employment_type,
+        remote_type=RemoteType(row.remote_type),
+        employment_type=EmploymentType(row.employment_type),
         description=row.description,
         description_html=row.description_html,
         requirements=row.requirements,
@@ -49,12 +50,12 @@ def _job_row_to_model(row: JobRow) -> Job:
         source_url=row.source_url,
         canonical_url=row.canonical_url,
         application_url=row.application_url,
-        ats_provider=row.ats_provider,
+        ats_provider=ATSProvider(row.ats_provider),
         posted_at=row.posted_at,
         discovered_at=row.discovered_at,
         updated_at=row.updated_at,
         match_score=row.match_score,
-        status=row.status,
+        status=JobStatus(row.status),
         skip_reason=row.skip_reason,
         department=row.department,
         team=row.team,
@@ -207,7 +208,7 @@ class JobRepository:
             update(JobRow).where(JobRow.id == job_id).values(**values)
         )
         await self.session.flush()
-        return result.rowcount > 0  # type: ignore[union-attr]
+        return cast("CursorResult[Any]", result).rowcount > 0
 
     async def update_match_score(self, job_id: str, score: float) -> bool:
         """Update a job's match score."""
@@ -217,7 +218,7 @@ class JobRepository:
             .values(match_score=score, updated_at=datetime.utcnow())
         )
         await self.session.flush()
-        return result.rowcount > 0  # type: ignore[union-attr]
+        return cast("CursorResult[Any]", result).rowcount > 0
 
     async def update_job(self, job: Job) -> bool:
         """Update a job's skills, experience, and other extracted data."""
@@ -235,7 +236,7 @@ class JobRepository:
             update(JobRow).where(JobRow.id == job.id).values(**values)
         )
         await self.session.flush()
-        return result.rowcount > 0  # type: ignore[union-attr]
+        return cast("CursorResult[Any]", result).rowcount > 0
 
     async def get_stats(self) -> dict:
         """Get aggregate job statistics."""
@@ -318,7 +319,7 @@ class ApplicationRepository:
         return Application(
             id=row.id,
             job_id=row.job_id,
-            status=row.status,
+            status=ApplicationStatus(row.status),
             applied_at=row.applied_at,
             resume_version=row.resume_version,
             application_url=row.application_url,
@@ -404,7 +405,7 @@ class ApplicationRepository:
                     "application": Application(
                         id=app_row.id,
                         job_id=app_row.job_id,
-                        status=app_row.status,
+                        status=ApplicationStatus(app_row.status),
                         applied_at=app_row.applied_at,
                         resume_version=app_row.resume_version,
                         application_url=app_row.application_url,

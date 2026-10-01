@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from job_search_agent.database import get_session, init_db
 from job_search_agent.database.repository import JobRepository
 from job_search_agent.logging import get_logger
+from job_search_agent.models.job import JobStatus
 from job_search_agent.providers.generic import GenericProvider
 from job_search_agent.providers.greenhouse import GreenhouseProvider
 from job_search_agent.providers.lever import LeverProvider
+
+if TYPE_CHECKING:
+    from job_search_agent.providers.base import JobProvider
 
 logger = get_logger(__name__)
 
@@ -43,6 +49,7 @@ async def analyze_job_url(url: str) -> dict:
         url: The job posting URL to analyze
     """
     job = None
+    provider: JobProvider
 
     # Try specialized providers first based on URL
     if "greenhouse.io" in url:
@@ -77,7 +84,7 @@ async def analyze_job_url(url: str) -> dict:
                 "note": "Job already exists in database",
             }
 
-        job.status = "analyzed"
+        job.status = JobStatus.ANALYZED
         saved = await repo.save(job)
         await session.commit()
         return {"job": saved.model_dump(mode="json", exclude_none=True)}

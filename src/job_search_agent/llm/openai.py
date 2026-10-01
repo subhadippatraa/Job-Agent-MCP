@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from job_search_agent.llm.base import LLMProvider
 from job_search_agent.logging import get_logger
 
@@ -31,7 +33,7 @@ class OpenAIProvider(LLMProvider):
         max_tokens: int = 1000,
         temperature: float = 0.3,
     ) -> str:
-        messages = []
+        messages: list[Any] = []
         if system:
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})

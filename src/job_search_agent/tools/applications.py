@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from job_search_agent.config import get_settings
 from job_search_agent.database import get_session, init_db
@@ -12,9 +13,13 @@ from job_search_agent.database.repository import (
 )
 from job_search_agent.logging import get_logger
 from job_search_agent.matching.scorer import score_job
-from job_search_agent.models.application import Application, ApplicationPrep
+from job_search_agent.models.application import Application, ApplicationPrep, ApplicationStatus
 from job_search_agent.models.candidate import CandidateProfile, load_candidate_profile
 from job_search_agent.resume import get_relevant_bullets, get_resume
+
+if TYPE_CHECKING:
+    from job_search_agent.models.job import Job
+    from job_search_agent.models.match import MatchResult
 
 logger = get_logger(__name__)
 
@@ -250,7 +255,7 @@ async def record_application(
 
         app = Application(
             job_id=job_id,
-            status="applied",
+            status=ApplicationStatus.APPLIED,
             applied_at=datetime.utcnow(),
             resume_version=resume_version,
             application_url=application_url or job.application_url,
@@ -320,6 +325,8 @@ async def update_application_status(
         if not app:
             return {"error": f"No application found for job: {job_id}"}
 
+        if app.id is None:
+            return {"error": f"Application has no ID for job: {job_id}"}
         await app_repo.update_status(app.id, status, notes)
         await job_repo.update_status(job_id, status)
         await session.commit()
@@ -380,7 +387,7 @@ async def get_applications(
 # --- Helper functions ---
 
 
-def _predict_screening_questions(job, candidate: CandidateProfile) -> list[str]:
+def _predict_screening_questions(job: Job, candidate: CandidateProfile) -> list[str]:
     """Predict likely screening questions based on job requirements."""
     questions = []
 
@@ -414,7 +421,7 @@ def _predict_screening_questions(job, candidate: CandidateProfile) -> list[str]:
     return questions
 
 
-def _build_checklist(job, candidate: CandidateProfile) -> list[str]:
+def _build_checklist(job: Job, candidate: CandidateProfile) -> list[str]:
     """Build an application checklist."""
     checklist = [
         "Review job description thoroughly",
@@ -442,7 +449,7 @@ def _build_checklist(job, candidate: CandidateProfile) -> list[str]:
     return checklist
 
 
-def _extract_important_requirements(job) -> list[str]:
+def _extract_important_requirements(job: Job) -> list[str]:
     """Extract the most important requirements from a job posting."""
     reqs = []
 
@@ -464,7 +471,7 @@ def _extract_important_requirements(job) -> list[str]:
     return reqs
 
 
-def _build_recruiter_message(job, candidate: CandidateProfile, match) -> str:
+def _build_recruiter_message(job: Job, candidate: CandidateProfile, match: MatchResult) -> str:
     """Build a suggested recruiter message (candidate should customize)."""
     name = candidate.name
     skills = ", ".join(match.matched_skills[:4]) if match.matched_skills else "relevant skills"
@@ -479,7 +486,9 @@ def _build_recruiter_message(job, candidate: CandidateProfile, match) -> str:
     )
 
 
-def _build_cover_letter_points(job, candidate: CandidateProfile, match) -> list[str]:
+def _build_cover_letter_points(
+    job: Job, candidate: CandidateProfile, match: MatchResult
+) -> list[str]:
     """Build suggested cover letter talking points."""
     points = []
 

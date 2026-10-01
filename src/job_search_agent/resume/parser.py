@@ -97,7 +97,7 @@ def parse_pdf(path: str | Path) -> ResumeData:
         raise ValueError(f"Expected a PDF file, got: {path.suffix}")
 
     try:
-        import fitz  # PyMuPDF
+        import fitz  # type: ignore[import-untyped]  # PyMuPDF
     except ImportError:
         raise ImportError(
             "PyMuPDF is required for PDF parsing. Install with: pip install pymupdf"
