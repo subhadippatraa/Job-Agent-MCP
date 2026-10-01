@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     default_search_limit: int = Field(default=50, alias="DEFAULT_SEARCH_LIMIT")
     default_posted_within_hours: int = Field(default=24, alias="DEFAULT_POSTED_WITHIN_HOURS")
     http_timeout_seconds: int = Field(default=30, alias="HTTP_TIMEOUT_SECONDS")
-    max_retries: int = Field(default=3, alias="MAX_RETRIES")
+    max_retries: int = Field(default=3, ge=1, alias="MAX_RETRIES")
 
     # Provider boards (comma-separated strings parsed to lists)
     greenhouse_boards: list[str] = Field(
@@ -71,8 +71,6 @@ class Settings(BaseSettings):
 
     # Matching
     match_weights: MatchWeights = Field(default_factory=MatchWeights)
-    auto_shortlist_min_score: int = Field(default=75, alias="AUTO_SHORTLIST_MIN_SCORE")
-
     # Safety
     require_human_approval: bool = Field(
         default=True,

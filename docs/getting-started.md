@@ -129,6 +129,5 @@ Find AI jobs matching my resume.
 | `DEFAULT_POSTED_WITHIN_HOURS` | `24` | Time window for new jobs |
 | `LLM_PROVIDER` | `none` | `openai`, `anthropic`, or `none` |
 | `REQUIRE_HUMAN_APPROVAL` | `true` | Require user confirmation before recording applications |
-| `AUTO_SHORTLIST_MIN_SCORE` | `75` | Auto-shortlist threshold |
 | `MATCH_WEIGHT_*` | *(see .env.example)* | Matching algorithm weights |
 | `LOG_LEVEL` | `INFO` | Logging level |
