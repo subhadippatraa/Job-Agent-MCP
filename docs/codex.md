@@ -7,10 +7,10 @@
 Edit `~/.codex/config.toml`:
 
 ```toml
-[mcpServers.job-search-agent]
+[mcp_servers.job-search-agent]
 command = "/path/to/JOB-Agent/.venv/bin/python"
 args = ["-m", "job_search_agent.server"]
-env = { "DATABASE_URL" = "sqlite+aiosqlite:///./jobagent.db" }
+cwd = "/path/to/JOB-Agent"
 ```
 
 Replace `/path/to/JOB-Agent` with the actual path to this repository.
@@ -20,14 +20,15 @@ Replace `/path/to/JOB-Agent` with the actual path to this repository.
 Create `.codex/config.toml` in your project root:
 
 ```toml
-[mcpServers.job-search-agent]
+[mcp_servers.job-search-agent]
 command = "/path/to/JOB-Agent/.venv/bin/python"
 args = ["-m", "job_search_agent.server"]
+cwd = "/path/to/JOB-Agent"
 ```
 
 ## Verify
 
-Start a Codex session and ask:
+Run `codex mcp list`, then start a new Codex session and ask:
 
 ```
 What MCP tools do you have available?
