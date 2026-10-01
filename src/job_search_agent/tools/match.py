@@ -130,14 +130,9 @@ async def rank_jobs(
             if not job:
                 continue
 
-            # Check cache first
-            cached = await match_repo.get_by_job_id(job_id)
-            if cached:
-                match = cached
-            else:
-                match = score_job(job, candidate, resume)
-                await match_repo.save(job_id, match)
-                await job_repo.update_match_score(job_id, match.score)
+            match = score_job(job, candidate, resume)
+            await match_repo.save(job_id, match)
+            await job_repo.update_match_score(job_id, match.score)
 
             if min_score is not None and match.score < min_score:
                 continue

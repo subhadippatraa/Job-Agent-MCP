@@ -9,7 +9,7 @@ from job_search_agent.tools.applications import (
     prepare_application,
     update_application_status,
 )
-from job_search_agent.tools.match import match_job_to_candidate
+from job_search_agent.tools.match import match_job_to_candidate, rank_jobs
 from job_search_agent.tools.stats import get_job_stats
 
 
@@ -33,6 +33,19 @@ async def test_application_workflow(tmp_path, monkeypatch, sample_candidate, ai_
 
     match = await match_job_to_candidate(job_id=ai_engineer_job.id)
     assert match["score"] >= 70
+
+    changed_candidate = sample_candidate.model_copy(
+        update={
+            "target_roles": ["Accountant"],
+            "skills": [],
+            "primary_skills": [],
+            "secondary_skills": [],
+        }
+    )
+    profile.write_text(yaml.safe_dump(changed_candidate.model_dump(mode="json")))
+    reranked = await rank_jobs([ai_engineer_job.id])
+    assert reranked["ranked_jobs"][0]["score"] < match["score"]
+    profile.write_text(yaml.safe_dump(sample_candidate.model_dump(mode="json")))
 
     prep = await prepare_application(ai_engineer_job.id)
     assert prep["company"] == ai_engineer_job.company
