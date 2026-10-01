@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
+import ipaddress
+import socket
 from datetime import UTC, datetime
+from urllib.parse import urljoin, urlparse
 
 import httpx
 from bs4 import BeautifulSoup
@@ -46,7 +50,7 @@ class GenericProvider(JobProvider):
                     "Accept": "text/html,application/xhtml+xml",
                     "User-Agent": "JobSearchAgent/0.1 (job-analysis-tool)",
                 },
-                follow_redirects=True,
+                follow_redirects=False,
             )
         return self._client
 
@@ -61,10 +65,18 @@ class GenericProvider(JobProvider):
     async def fetch_job(self, job_url: str) -> Job | None:
         """Fetch and analyze a job posting URL."""
         try:
-            resp = await self.client.get(job_url)
-            resp.raise_for_status()
-            html = resp.text
-            return self._parse_html(html, job_url)
+            current_url = job_url
+            for _ in range(6):
+                await _validate_public_http_url(current_url)
+                resp = await self.client.get(current_url)
+                if not resp.is_redirect:
+                    resp.raise_for_status()
+                    return self._parse_html(resp.text, current_url)
+                location = resp.headers.get("location")
+                if not location:
+                    return None
+                current_url = urljoin(current_url, location)
+            raise ValueError("Too many redirects")
         except Exception as e:
             logger.error("generic_fetch_error", url=job_url, error=str(e))
             return None
@@ -176,8 +188,6 @@ class GenericProvider(JobProvider):
                 return meta["content"]
 
         # Extract from URL
-        from urllib.parse import urlparse
-
         parsed = urlparse(url)
         domain_parts = parsed.hostname.split(".") if parsed.hostname else []
         if len(domain_parts) >= 2:
@@ -275,3 +285,19 @@ class GenericProvider(JobProvider):
         if self._client:
             await self._client.aclose()
             self._client = None
+
+
+async def _validate_public_http_url(url: str) -> None:
+    """Reject URLs that could reach local or private network services."""
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username:
+        raise ValueError("Only public HTTP(S) URLs are allowed")
+
+    try:
+        addresses = [ipaddress.ip_address(parsed.hostname)]
+    except ValueError:
+        records = await asyncio.to_thread(socket.getaddrinfo, parsed.hostname, None)
+        addresses = list({ipaddress.ip_address(record[4][0]) for record in records})
+
+    if not addresses or any(not address.is_global for address in addresses):
+        raise ValueError("Private, local, and reserved addresses are not allowed")
