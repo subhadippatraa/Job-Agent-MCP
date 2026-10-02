@@ -21,6 +21,8 @@ class TestSkillCanonicalization:
         assert canonicalize_skill("LLMs") == "llm"
         assert canonicalize_skill("Retrieval Augmented Generation") == "rag"
         assert canonicalize_skill("function calling") == "tool calling"
+        assert canonicalize_skill("REST") == "rest apis"
+        assert canonicalize_skill("Agents") == "ai agents"
 
     def test_unknown_passthrough(self):
         assert canonicalize_skill("SomeNewTech") == "somenewtecH".lower()

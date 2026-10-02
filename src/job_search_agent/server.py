@@ -87,7 +87,7 @@ async def search_jobs(
 
 
 @mcp.tool()
-async def search_jobs_for_candidate() -> dict:
+async def search_jobs_for_candidate(limit: int = 300, posted_within_days: int = 30) -> dict:
     """Find the best new jobs matching the candidate's profile and resume.
 
     This is the primary tool for requests like:
@@ -96,12 +96,49 @@ async def search_jobs_for_candidate() -> dict:
     - "What opportunities match my skills?"
 
     Automatically reads the candidate profile and resume, searches using
-    target roles, scores all results, removes duplicates, and returns
-    ranked opportunities.
+    target roles, saves up to 300 results in the database, scores them, removes
+    duplicates, and returns ranked opportunities. Pass a smaller limit as needed.
+
+    Args:
+        limit: Maximum number of jobs to discover and rank (1-300, default: 300)
+        posted_within_days: Maximum posting age (1-90 days, default: 30)
     """
     from job_search_agent.tools.search import search_jobs_for_candidate as _search
 
-    return await _search()
+    return await _search(limit=limit, posted_within_days=posted_within_days)
+
+
+@mcp.tool()
+async def get_daily_application_queue(
+    target: int = 100,
+    pool_size: int = 300,
+    min_score: float = 85,
+    posted_within_days: int = 30,
+    max_required_experience: int = 2,
+) -> dict:
+    """Build the ranked daily application queue plus replacements.
+
+    Match score contributes 90% and posting freshness contributes 10% to the
+    priority score. Only confirmed submissions recorded today count toward the
+    target. After each attempt, call record_application on success or skip_job
+    on failure, then call this tool again to replenish from the reserve pool.
+
+    Args:
+        target: Confirmed applications required today (1-100)
+        pool_size: Jobs to discover and rank (target-300)
+        min_score: Minimum profile match score (0-100, default: 85)
+        posted_within_days: Maximum known posting age (1-90 days)
+        max_required_experience: Highest accepted minimum experience requirement (default: 2)
+    """
+    from job_search_agent.tools.search import get_daily_application_queue as _queue
+
+    return await _queue(
+        target=target,
+        pool_size=pool_size,
+        min_score=min_score,
+        posted_within_days=posted_within_days,
+        max_required_experience=max_required_experience,
+    )
 
 
 # =============================================================================
@@ -124,7 +161,13 @@ async def get_job(job_id: str) -> dict:
 
 
 @mcp.tool()
-async def analyze_job_url(url: str) -> dict:
+async def analyze_job_url(
+    url: str,
+    page_text: str | None = None,
+    title: str | None = None,
+    company: str | None = None,
+    location: str | None = None,
+) -> dict:
     """Fetch and analyze a job posting from any URL.
 
     Extracts company, title, location, skills, experience requirements,
@@ -135,10 +178,20 @@ async def analyze_job_url(url: str) -> dict:
 
     Args:
         url: The job posting URL to analyze
+        page_text: Visible job text extracted by Playwright when direct fetching is blocked
+        title: Visible job title; required with page_text
+        company: Visible company name; required with page_text
+        location: Visible location
     """
     from job_search_agent.tools.analyze import analyze_job_url as _analyze
 
-    return await _analyze(url)
+    return await _analyze(
+        url,
+        page_text=page_text,
+        title=title,
+        company=company,
+        location=location,
+    )
 
 
 @mcp.tool()
@@ -338,6 +391,26 @@ async def record_application(
         notes=notes,
         source=source,
     )
+
+
+@mcp.tool()
+async def request_submission_approval(applications: list[dict], timeout_seconds: int = 300) -> dict:
+    """Ask the configured Telegram chat to approve or reject this exact batch.
+
+    Call only after every application is prepared and its form is ready at the
+    final submit step. Approval is one-time and covers only the supplied batch.
+    """
+    from job_search_agent.tools.telegram import request_submission_approval as _request
+
+    return await _request(applications, timeout_seconds=timeout_seconds)
+
+
+@mcp.tool()
+async def request_candidate_input(question: str, timeout_seconds: int = 600) -> dict:
+    """Ask one unknown application question in Telegram and wait for a direct reply."""
+    from job_search_agent.tools.telegram import request_candidate_input as _request
+
+    return await _request(question, timeout_seconds=timeout_seconds)
 
 
 @mcp.tool()

@@ -3,10 +3,16 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
 
 from job_search_agent.config import get_settings
 from job_search_agent.database import get_session, init_db
-from job_search_agent.database.repository import JobRepository, SearchRunRepository
+from job_search_agent.database.repository import (
+    ApplicationRepository,
+    JobRepository,
+    SearchRunRepository,
+)
 from job_search_agent.logging import get_logger
 from job_search_agent.matching.scorer import score_job
 from job_search_agent.models.candidate import load_candidate_profile
@@ -162,7 +168,7 @@ async def search_jobs(
     }
 
 
-async def search_jobs_for_candidate() -> dict:
+async def search_jobs_for_candidate(limit: int = 300, posted_within_days: int = 30) -> dict:
     """High-level agent tool: search using the candidate's profile, score, and rank results.
 
     Reads the candidate profile and resume automatically, searches for jobs matching
@@ -170,6 +176,11 @@ async def search_jobs_for_candidate() -> dict:
 
     This is the primary tool for queries like: "Find the best new jobs for me."
     """
+    if not 1 <= limit <= 300:
+        return {"error": "limit must be between 1 and 300"}
+    if not 1 <= posted_within_days <= 90:
+        return {"error": "posted_within_days must be between 1 and 90"}
+
     settings = get_settings()
 
     # Load candidate
@@ -182,13 +193,15 @@ async def search_jobs_for_candidate() -> dict:
     # Search using candidate target roles
     search_result = await search_jobs(
         roles=candidate.target_roles,
-        location=candidate.preferred_locations[0] if candidate.preferred_locations else None,
+        location=candidate.current_location,
         experience_max=int(candidate.years_experience or 3) + 1,
-        limit=settings.default_search_limit,
+        posted_within_hours=posted_within_days * 24,
+        limit=limit,
     )
 
     # Score each job
     scored_jobs = []
+    score_updates: list[tuple[str, float]] = []
     for job_data in search_result.get("jobs", []):
         job = Job(**job_data)
         match = score_job(job, candidate, resume)
@@ -202,18 +215,21 @@ async def search_jobs_for_candidate() -> dict:
 
         scored_jobs.append(job_data)
 
-        # Update score in DB
         if job.id:
-            await init_db()
-            session = await get_session()
-            try:
-                job_repo = JobRepository(session)
-                await job_repo.update_match_score(job.id, match.score)
-                await session.commit()
-            except Exception:
-                await session.rollback()
-            finally:
-                await session.close()
+            score_updates.append((job.id, match.score))
+
+    if score_updates:
+        await init_db()
+        session = await get_session()
+        try:
+            job_repo = JobRepository(session)
+            for job_id, score in score_updates:
+                await job_repo.update_match_score(job_id, score)
+            await session.commit()
+        except Exception:
+            await session.rollback()
+        finally:
+            await session.close()
 
     # Sort by score descending
     scored_jobs.sort(key=lambda x: x.get("match_score", 0), reverse=True)
@@ -226,6 +242,130 @@ async def search_jobs_for_candidate() -> dict:
         "providers_used": search_result.get("providers_used", []),
         "errors": search_result.get("errors"),
     }
+
+
+async def get_daily_application_queue(
+    target: int = 100,
+    pool_size: int = 300,
+    min_score: float = 85,
+    posted_within_days: int = 30,
+    max_required_experience: int = 2,
+) -> dict:
+    """Build today's ranked queue and reserve pool.
+
+    Only confirmed applications recorded today count toward ``target``. Call
+    ``record_application`` after each confirmed submission and ``skip_job`` for
+    failed or blocked attempts, then call this tool again to pull replacements.
+    """
+    if not 1 <= target <= 100:
+        return {"error": "target must be between 1 and 100"}
+    if not target <= pool_size <= 300:
+        return {"error": "pool_size must be between target and 300"}
+    if not 0 <= min_score <= 100:
+        return {"error": "min_score must be between 0 and 100"}
+    if not 0 <= max_required_experience <= 20:
+        return {"error": "max_required_experience must be between 0 and 20"}
+
+    result = await search_jobs_for_candidate(
+        limit=pool_size,
+        posted_within_days=posted_within_days,
+    )
+    if result.get("error"):
+        return result
+
+    await init_db()
+    session = await get_session()
+    try:
+        now = datetime.now(ZoneInfo("Asia/Kolkata"))
+        start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        since = start.astimezone(UTC).replace(tzinfo=None)
+        applications = await ApplicationRepository(session).search(
+            status="applied",
+            since=since,
+            limit=target,
+        )
+    finally:
+        await session.close()
+
+    applied_today = len(applications)
+    remaining = max(0, target - applied_today)
+    ranked = _prioritize_jobs(
+        result.get("jobs", []),
+        min_score=min_score,
+        posted_within_days=posted_within_days,
+        max_required_experience=max_required_experience,
+        now=now,
+    )
+
+    return {
+        "date": now.date().isoformat(),
+        "target": target,
+        "applied_today": applied_today,
+        "remaining_to_apply": remaining,
+        "primary_queue": ranked[:remaining],
+        "reserve_queue": ranked[remaining:],
+        "eligible_jobs": len(ranked),
+        "pool_requested": pool_size,
+        "providers_used": result.get("providers_used", []),
+        "errors": result.get("errors"),
+        "replacement_rule": (
+            "Only a site-confirmed submission recorded with record_application counts. "
+            "Mark failed or blocked attempts with skip_job, then call this tool again."
+        ),
+    }
+
+
+def _prioritize_jobs(
+    jobs: list[dict],
+    min_score: float,
+    posted_within_days: int,
+    max_required_experience: int = 2,
+    now: datetime | None = None,
+) -> list[dict]:
+    """Rank eligible jobs by 90% profile match and 10% posting freshness."""
+    now = now or datetime.now(UTC)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=UTC)
+    terminal = {"applied", "skipped", "withdrawn", "rejected", "offer"}
+    ranked = []
+    for job in jobs:
+        score = float(job.get("match_score") or 0)
+        required_experience = job.get("min_experience")
+        if (
+            score < min_score
+            or job.get("status") in terminal
+            or required_experience is None
+            or required_experience > max_required_experience
+        ):
+            continue
+
+        posted = job.get("posted_at")
+        if isinstance(posted, str):
+            posted = datetime.fromisoformat(posted.replace("Z", "+00:00"))
+        if posted and posted.tzinfo is None:
+            posted = posted.replace(tzinfo=UTC)
+        days_ago = max(0, (now - posted).days) if posted else None
+        if days_ago is not None and days_ago > posted_within_days:
+            continue
+
+        freshness = 0.0 if days_ago is None else 10 * max(0, 1 - days_ago / posted_within_days)
+        ranked.append(
+            {
+                **job,
+                "days_since_posted": days_ago,
+                "priority_score": round(score * 0.9 + freshness, 1),
+            }
+        )
+
+    ranked.sort(
+        key=lambda job: (
+            job["priority_score"],
+            job.get("match_score") or 0,
+            -(job["days_since_posted"] if job["days_since_posted"] is not None else 10_000),
+        ),
+        reverse=True,
+    )
+    return ranked
 
 
 def _deduplicate(jobs: list[Job]) -> tuple[list[Job], int]:

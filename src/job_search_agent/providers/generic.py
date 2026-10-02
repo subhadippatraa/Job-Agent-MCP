@@ -129,6 +129,37 @@ class GenericProvider(JobProvider):
             discovered_at=datetime.now(UTC),
         )
 
+    def parse_text(
+        self,
+        url: str,
+        text: str,
+        *,
+        title: str,
+        company: str,
+        location: str | None = None,
+    ) -> Job:
+        """Normalize text extracted by an interactive browser."""
+        required_skills, preferred_skills = _extract_skills_from_text(text)
+        min_exp, max_exp = _extract_experience(text)
+        return Job(
+            company=company,
+            title=title,
+            normalized_title=_normalize_title(title),
+            location=location,
+            remote_type=_detect_remote(location or "", text),
+            description=text,
+            required_skills=required_skills,
+            preferred_skills=preferred_skills,
+            min_experience=min_exp,
+            max_experience=max_exp,
+            source="generic",
+            source_url=url,
+            canonical_url=url,
+            application_url=url,
+            ats_provider=self._detect_ats(url, ""),
+            discovered_at=datetime.now(UTC),
+        )
+
     def _extract_title(self, soup: BeautifulSoup) -> str:
         """Extract job title from the page."""
         # Try structured data first

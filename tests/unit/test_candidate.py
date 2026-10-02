@@ -19,6 +19,8 @@ class TestCandidateProfile:
     def test_optional_fields_none(self):
         profile = CandidateProfile(name="Test")
         assert profile.work_authorization is None
+        assert profile.relocation_willingness is None
+        assert profile.current_salary is None
         assert profile.salary_expectation is None
         assert profile.notice_period is None
 

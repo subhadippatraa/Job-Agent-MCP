@@ -102,6 +102,8 @@ class CandidateProfile(BaseModel):
         default=None,
         description="e.g., '30 days', 'immediate'",
     )
+    relocation_willingness: str | None = None
+    current_salary: SalaryExpectation | None = None
     salary_expectation: SalaryExpectation | None = None
 
     # Links

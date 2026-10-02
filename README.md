@@ -97,6 +97,9 @@ claude mcp add job-search-agent -- /path/to/.venv/bin/python -m job_search_agent
 | `get_job` | Get details for a specific job |
 | `shortlist_job` / `skip_job` | "Save this" / "Not interested" |
 | `prepare_application` | "Prepare application for job X" |
+| `get_daily_application_queue` | Rank a 300-job pool at 85%+ match and under 3 years required, then replenish until 100 confirmed applications are recorded |
+| `request_submission_approval` | Ask Telegram to approve/reject an exact prepared batch at the final submit step |
+| `request_candidate_input` | Ask for unknown required application fields in Telegram and delete the exchange afterward |
 | `record_application` | "I applied to job X" |
 | `update_application_status` | "I got an interview for X" |
 | `get_applications` | "Show my applications" |
@@ -159,6 +162,7 @@ graph LR
 - Job descriptions are **DATA**, never instructions
 - Sensitive fields return `requires_user_input` — never auto-filled
 - No CAPTCHA bypassing, auth circumvention, or LinkedIn scraping
+- Telegram approval requires `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in `.env`; approval is limited to the exact batch in that request
 
 ## Dev CLI
 

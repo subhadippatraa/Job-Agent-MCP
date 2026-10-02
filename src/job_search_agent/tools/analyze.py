@@ -36,7 +36,13 @@ async def get_job(job_id: str) -> dict:
         await session.close()
 
 
-async def analyze_job_url(url: str) -> dict:
+async def analyze_job_url(
+    url: str,
+    page_text: str | None = None,
+    title: str | None = None,
+    company: str | None = None,
+    location: str | None = None,
+) -> dict:
     """Fetch and analyze a job posting from any URL.
 
     Extracts: company, title, location, employment type, remote status,
@@ -51,12 +57,22 @@ async def analyze_job_url(url: str) -> dict:
     job = None
     provider: JobProvider
 
+    if page_text and title and company:
+        generic = GenericProvider()
+        job = generic.parse_text(
+            url,
+            page_text,
+            title=title,
+            company=company,
+            location=location,
+        )
+
     # Try specialized providers first based on URL
-    if "greenhouse.io" in url:
+    if job is None and "greenhouse.io" in url:
         provider = GreenhouseProvider()
         job = await provider.fetch_job(url)
         await provider.close()
-    elif "lever.co" in url:
+    elif job is None and "lever.co" in url:
         provider = LeverProvider()
         job = await provider.fetch_job(url)
         await provider.close()
@@ -79,6 +95,16 @@ async def analyze_job_url(url: str) -> dict:
         # Check for duplicates
         existing = await repo.get_by_canonical_url(url)
         if existing:
+            if page_text:
+                job.id = existing.id
+                job.status = existing.status
+                job.discovered_at = existing.discovered_at
+                saved = await repo.replace(job)
+                await session.commit()
+                return {
+                    "job": saved.model_dump(mode="json", exclude_none=True),
+                    "note": "Job refreshed from browser text",
+                }
             return {
                 "job": existing.model_dump(mode="json", exclude_none=True),
                 "note": "Job already exists in database",

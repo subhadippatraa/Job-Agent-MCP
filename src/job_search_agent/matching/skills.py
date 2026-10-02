@@ -39,6 +39,8 @@ SKILL_ALIASES: dict[str, str] = {
     "claude api": "anthropic api",
     "ai agents": "ai agents",
     "agentic ai": "ai agents",
+    "agent": "ai agents",
+    "agents": "ai agents",
     "agent framework": "ai agents",
     "multi-agent": "multi-agent systems",
     "multi agent": "multi-agent systems",
@@ -78,6 +80,9 @@ SKILL_ALIASES: dict[str, str] = {
     "cicd": "ci/cd",
     "ci cd": "ci/cd",
     "continuous integration": "ci/cd",
+    "rest": "rest apis",
+    "rest api": "rest apis",
+    "rest apis": "rest apis",
     "github actions": "github actions",
     "gh actions": "github actions",
     # Async

@@ -25,6 +25,7 @@ logger = get_logger(__name__)
 
 # Sensitive fields that must never be auto-answered
 SENSITIVE_FIELDS = [
+    "current_salary",
     "salary_expectation",
     "work_authorization",
     "disability_status",

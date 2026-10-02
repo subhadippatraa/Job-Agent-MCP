@@ -116,6 +116,12 @@ class JobRepository:
         await self.session.flush()
         return _job_row_to_model(row)
 
+    async def replace(self, job: Job) -> Job:
+        """Replace an existing job with a newly parsed version."""
+        row = await self.session.merge(_job_model_to_row(job))
+        await self.session.flush()
+        return _job_row_to_model(row)
+
     async def get_by_id(self, job_id: str) -> Job | None:
         """Get a single job by ID."""
         result = await self.session.execute(select(JobRow).where(JobRow.id == job_id))

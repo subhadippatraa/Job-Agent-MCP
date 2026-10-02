@@ -152,6 +152,9 @@ education: []
 # ---------------------------------------------------------------------------
 work_authorization: null   # e.g., "citizen", "work_permit", "visa_required"
 notice_period: null         # e.g., "30 days", "immediate", "60 days"
+relocation_willingness: null # e.g., "Yes", "No", "Yes — open to relocating anywhere"
+
+current_salary: null
 
 salary_expectation: null
   # min: 800000

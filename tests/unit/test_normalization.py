@@ -48,6 +48,9 @@ class TestExperienceExtraction:
     def test_plus_pattern(self):
         assert _extract_experience("3+ years of experience") == (3, None)
 
+    def test_experience_prefix(self):
+        assert _extract_experience("Experience: 2+ years building AI systems") == (2, None)
+
     def test_range_pattern(self):
         assert _extract_experience("3-5 years of experience") == (3, 5)
 
@@ -81,3 +84,12 @@ class TestSkillExtraction:
         all_skills = [s.lower() for s in required + preferred]
         assert "langchain" in all_skills
         assert "rag" in all_skills
+
+    def test_does_not_match_inside_words(self):
+        required, _ = _extract_skills_from_text(
+            "Build trusted systems with ongoing evaluation using JavaScript."
+        )
+        assert "Rust" not in required
+        assert "Go" not in required
+        assert "Java" not in required
+        assert "JavaScript" in required

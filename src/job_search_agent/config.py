@@ -56,11 +56,18 @@ class Settings(BaseSettings):
     max_retries: int = Field(default=3, ge=1, alias="MAX_RETRIES")
 
     # Provider boards (comma-separated strings parsed to lists)
-    greenhouse_boards: list[str] = Field(
-        default_factory=lambda: ["stripe", "figma"], alias="GREENHOUSE_BOARDS"
-    )
-    lever_companies: list[str] = Field(default_factory=lambda: ["netflix"], alias="LEVER_COMPANIES")
-    ashby_boards: list[str] = Field(default_factory=lambda: ["linear"], alias="ASHBY_BOARDS")
+    greenhouse_boards: list[str] = Field(default_factory=list, alias="GREENHOUSE_BOARDS")
+    lever_companies: list[str] = Field(default_factory=list, alias="LEVER_COMPANIES")
+    ashby_boards: list[str] = Field(default_factory=list, alias="ASHBY_BOARDS")
+
+    # Broad discovery
+    adzuna_app_id: str | None = Field(default=None, alias="ADZUNA_APP_ID")
+    adzuna_app_key: str | None = Field(default=None, alias="ADZUNA_APP_KEY")
+    adzuna_country: str = Field(default="in", alias="ADZUNA_COUNTRY")
+
+    # Telegram submission approval
+    telegram_bot_token: str | None = Field(default=None, alias="TELEGRAM_BOT_TOKEN")
+    telegram_chat_id: str | None = Field(default=None, alias="TELEGRAM_CHAT_ID")
 
     # LLM
     openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")

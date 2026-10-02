@@ -252,6 +252,7 @@ def _extract_experience(text: str) -> tuple[int | None, int | None]:
     """
     # Common patterns: "3+ years", "3-5 years", "3 to 5 years", "minimum 3 years"
     patterns = [
+        r"experience\s*:\s*(\d+)\+?\s*years?",
         r"(\d+)\s*[-–to]+\s*(\d+)\s*(?:\+\s*)?years?\s*(?:of\s+)?(?:experience|exp)",
         r"(\d+)\+?\s*years?\s*(?:of\s+)?(?:experience|exp)",
         r"minimum\s*(?:of\s+)?(\d+)\s*years?",
@@ -375,10 +376,11 @@ def _extract_skills_from_text(text: str) -> tuple[list[str], list[str]]:
 
     for skill in known_skills:
         skill_lower = skill.lower()
-        if skill_lower in text_lower:
-            if req_section and skill_lower in req_section:
+        pattern = rf"(?<!\w){re.escape(skill_lower)}(?!\w)"
+        if re.search(pattern, text_lower):
+            if req_section and re.search(pattern, req_section):
                 found_required.append(skill)
-            elif pref_section and skill_lower in pref_section:
+            elif pref_section and re.search(pattern, pref_section):
                 found_preferred.append(skill)
             else:
                 # Default to required if we can't determine section
